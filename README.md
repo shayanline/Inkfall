@@ -13,8 +13,8 @@ This is a board for telling noir stories, not a general purpose engine. Every ta
 Story resource: a title, some music, and a list of acts. Each act names a backdrop, the
 lights, the cast, and the lines that play over them. The board reads that resource and
 stages it as a real Godot scene tree: object scenes built from Polygon2D, Line2D and
-Sprite2D, lit by native 2D lights over a global wash, with bloom, rain and the colour red
-where the story bleeds.
+Sprite2D, animated with AnimationPlayer and lit by native 2D lights over a global wash, with
+bloom, rain and the colour red where the story bleeds. The flow runs on signals.
 
 Behaviour is data too. A character walks, a sign ignites, a gun fires, blood crawls to the
 drain, all expressed as parameters and per line effects rather than new code.
@@ -60,8 +60,10 @@ To add a new object or backdrop, make a scene under `scenes/actors`, `scenes/pro
 stories/                the tales (Story .tres) + the picker library.tres
 src/resources/          the data types: Story, Act, Line, Placement, StoryLibrary
 src/util/               LightTex (light textures), BackdropBaker (skyline baking)
+themes/                 noir_theme.tres, the shared UI theme (set as the project default)
 scenes/
-  core/Main.*           the view controller: wash, bloom, camera, post, UI, flow
+  core/Main.*           the view controller: the authored global look (wash, bloom, camera, post)
+                        and the signal driven flow
   board/                Board (the act host) + BoardObject (the placed object base)
   backdrops/            skyline, alley, rooftop, room (BoardBackdrop scenes)
   lights/               lamp, neon, bulb (BoardLight scenes driving PointLight2D)
@@ -70,7 +72,7 @@ scenes/
   effects/              steam, searchlight, newspaper, the blood set, rain, lightning
   ui/                   start screen, captions and act picker, rotation gate
   transitions/          ink wipe, act card, end card
-autoload/               Palette, GameState, AudioDirector
+autoload/               Palette, GameState (the model and signal source), AudioDirector, Transitions
 shaders/                grain, vignette, ink wipe
 tools/                  build_stories (the .tres generator), SmokeTest
 audio/ fonts/           sound and type

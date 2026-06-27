@@ -95,6 +95,7 @@ func _spawn(p: Placement, base_z: int) -> BoardObject:
 	add_child(obj)
 	obj.place()
 	obj.z_index = base_z + obj.depth
+	obj.add_to_group("board_object")
 	line_changed.connect(obj.on_line)
 	fx.connect(obj.on_fx)
 	return obj

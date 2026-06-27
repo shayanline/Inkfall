@@ -6,8 +6,9 @@ is a board for staging noir stories, not a general purpose engine.
 
 The board is a real Godot scene tree: every placed object (a backdrop, a light, a cast member) is a
 node scene built from Polygon2D, Line2D, Sprite2D and Label, lit by native 2D lights (PointLight2D
-and DirectionalLight2D) over a global CanvasModulate wash, with WorldEnvironment bloom. There is no
-per frame repaint, the nodes draw themselves.
+and DirectionalLight2D) over a global CanvasModulate wash, with WorldEnvironment bloom. The nodes
+draw themselves and animate themselves with AnimationPlayer (and Tween for data driven motion), so
+there is no per frame repaint. The flow is signal driven, and the UI look comes from a shared Theme.
 
 ## Run
 
@@ -36,18 +37,27 @@ src/
     Placement.gd           a scene plus its params (a backdrop, light or cast entry)
     StoryLibrary.gd        the picker list
   util/
-    LightTex.gd            shared radial light texture for the 2D lights
+    light_radial.tres      shared radial falloff texture for the 2D lights and warm fixtures
+    soft_glow.tres         shared soft glow texture for the steam particles
+    LightTex.gd            loads and hands out light_radial.tres
     BackdropBaker.gd       bakes the seeded skyline (buildings plus windows) to a texture
-autoload/              globals
-  GameState.gd           the flow and data model (loaded story, current act and line). Never draws.
+themes/
+  noir_theme.tres        the shared UI theme (fonts, colours, styleboxes, type variations),
+                         set as the project default theme in project.godot
+autoload/              globals (Transitions.tscn is also registered as an autoload scene)
+  GameState.gd           the flow and data model, and the signal source: emits line_changed and
+                         fx_fired as the story advances. Never draws.
   Palette.gd             the fixed art direction (grayscale plus the colours that bleed) and timing
   AudioDirector.gd       looping beds (music, ambience, rain) crossfade, pooled duckable one shots
 scenes/
-  core/Main.*            the view controller: CanvasModulate wash, WorldEnvironment bloom, Camera2D,
-                         post FX, UI, then drives the flow by swapping the Board per act
+  core/Main.*            the view controller. The global look (CanvasModulate wash, WorldEnvironment
+                         bloom via Environment.tres, post FX via post_material.tres, Camera2D) is
+                         authored in Main.tscn; the script only advances GameState and swaps the Board.
   board/
-    Board.gd               the act host: builds the backdrop, lights, cast and weather as nodes,
-                           sets up the key and moon lights, forwards lines and fx. The old NoirPanel.
+    Board.gd               the act host: builds the backdrop, lights, cast and weather as nodes and
+                           sets up the key and moon lights. Reacts to GameState.line_changed and
+                           fx_fired, and fans them out to its objects by signal (plus the
+                           board_object group). The old NoirPanel.
     BoardObject.gd         base for everything placed on the board (placement, params, hooks)
   backdrops/            Skyline, Alley, Rooftop, Room (BoardBackdrop) + BoardBackdrop.gd
   lights/              Lamp, Neon, Bulb (BoardLight) + BoardLight.gd (drives a PointLight2D)
@@ -65,15 +75,21 @@ audio/ fonts/         sound and type
 
 ## Render model (how an act is staged)
 
-`Main` keeps a global look: a CanvasModulate wash darkens the whole 2D canvas, a WorldEnvironment
-adds additive bloom, and a post shader lays grain and a vignette over everything. For each act it
-swaps in a `Board`.
+`Main` owns the global look, authored in `Main.tscn`: a CanvasModulate wash darkens the whole 2D
+canvas, a WorldEnvironment adds additive bloom (Environment.tres), and a post shader lays grain and a
+vignette over everything (post_material.tres). For each act it swaps in a `Board`.
 
 `Board` builds the act as a scene tree: it instances the backdrop, the light fixtures and the cast
 (each a `Placement.scene`), positions and scales each one, creates the key light and the moon as
 PointLight2D nodes from the act, and adds the rain and lightning when the act is outdoor. From then
-on the nodes draw and light themselves, there is no manual repaint. Lights brighten the grayscale
-world out of the wash, and the colours that bleed (red, neon, fire) read where the light reaches.
+on the nodes draw, light and animate themselves (AnimationPlayer and Tween), there is no manual
+repaint. Lights brighten the grayscale world out of the wash, and the colours that bleed (red, neon,
+fire) read where the light reaches.
+
+The flow is signal driven. `GameState` holds the model and emits `line_changed` and `fx_fired`.
+`Board` and `Hud` react to those, and `Board` re forwards each beat to its spawned objects through its
+own `line_changed` and `fx` signals (every object also joins the `board_object` group). `Main` only
+advances `GameState` and orchestrates the transitions and audio.
 
 ## Object and story contract
 
@@ -87,9 +103,15 @@ object enters its first frame:
 - `BoardObject` handles placement (`nx`, `ny_units`, `par`, `obj_scale`, `flip`, `depth`, and the
   `anchor` for screen placed signs), the optional walk path (`walk` plus `walk_dur`), and reveal by
   flag (`on_flag` / `hide_on_flag`). A param named `y` screen anchors the object at that height.
-- Override `on_object_params(p)` to read any extra params (call `super` first). Override `on_tick()`
-  for per frame animation, reading `board.beat()`, `board.line_index` and `board.flags`. Override
-  `on_line(idx)` (call `super`) for per line poses, and `on_fx(name)` for events.
+- Override `on_object_params(p)` to read any extra params (call `super` first). Override `on_line(idx)`
+  and `on_fx(event)` (call `super`) to react to story beats and events, reading `board.line_index`
+  and `board.flags`. `Board` fans these to every object by signal.
+- Authored motion lives in an `AnimationPlayer` in the scene: a looping animation that autoplays (the
+  cat tail, the roulette spin, the searchlight sweep, the barrel flicker) or a triggered one the
+  script plays by name (the crow `fly`, the blood drain `grow` driving a normalized `progress`). Use a
+  `Tween` for data driven motion (the walk path tweens to each line's target). Keep `on_tick()` only
+  for genuinely procedural, random motion that cannot be keyframed (the light flicker, the lightning
+  bolt path).
 - A light scene is a `BoardLight` containing a `PointLight2D` child, which the base colours, energises
   and flickers from the params.
 
@@ -115,8 +137,11 @@ blood red) and `fx` (`muzzle`, `blood`, `lightning`, `hammer`, `lighter`).
   `##` doc comments on scripts and public methods, `_private` for internals. Read a neighbouring
   script before adding one.
 - Stories are data, behaviour is data. Keep the look centralised: lighting goes through native 2D
-  lights over the shared wash, and colours come from `Palette`. Do not hand roll a separate lighting
-  model per object.
+  lights over the shared wash, colours come from `Palette`, and the UI look comes from the shared
+  `themes/noir_theme.tres` (use its type variations, do not add per control theme overrides).
+- Do it the Godot way: author geometry as scene nodes, author motion as `AnimationPlayer` animations
+  or `Tween`s, and communicate by signal. Do not hand code per frame `sin()` animation, do not push
+  state into nodes that could react to a signal, and do not hand roll a lighting model per object.
 - Author art in design units in the scene, and let the board place and scale it. Do not bake the
   board scale into coordinates.
 

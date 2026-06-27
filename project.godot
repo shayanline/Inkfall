@@ -43,7 +43,7 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 
 [gui]
 
-theme/custom="res://ui/noir_theme.tres"
+theme/custom="res://themes/noir_theme.tres"
 
 [input]
 
