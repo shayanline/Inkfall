@@ -71,7 +71,10 @@ func _load_loop(path: String) -> AudioStream:
 	if s is AudioStreamMP3:
 		s.loop = true
 	elif s is AudioStreamWAV:
+		# a WAV needs an explicit loop end, leaving it 0 makes a zero length loop that stops at once
 		s.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		s.loop_begin = 0
+		s.loop_end = int(round(s.get_length() * s.mix_rate))
 	elif s is AudioStreamOggVorbis:
 		s.loop = true
 	return s

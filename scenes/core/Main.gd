@@ -85,8 +85,6 @@ func _open_story(story: Story) -> void:
 	var title := story.subtitle if story.subtitle != "" else story.title
 	await Transitions.show_card(title, Palette.TITLE_HOLD)
 	AudioDirector.start()
-	if story.music != "":
-		AudioDirector.play_music(story.music, story.music_vol)
 	await _enter_act(0, true)
 
 
@@ -96,12 +94,16 @@ func _enter_act(index: int, first: bool) -> void:
 	var act := GameState.current_act()
 	_swap_board(act)
 	if first:
-		# the screen is already black from the story-title card, so show the first act card here too
+		# the screen is already black from the story-title card, so show the first act card here too.
+		# the score and the swoosh come in with the act title, not the story title.
+		var story := GameState.story
+		if story.music != "":
+			AudioDirector.play_music(story.music, story.music_vol)
+		AudioDirector.whoosh()
 		await Transitions.show_card(act.title, Palette.OPEN_CARD_HOLD)
 		_zoom_in()
 		await Transitions.open()
 	_cue_audio(act)
-	AudioDirector.whoosh()
 	_hud.set_scene_tag(act.title)
 	_hud.set_current_act(GameState.act_index)
 	GameState.notify_line()
@@ -198,6 +200,7 @@ func _enter_act_covered(index: int) -> void:
 	GameState.go_to_act(index)
 	var act := GameState.current_act()
 	_swap_board(act)
+	AudioDirector.whoosh()
 	await Transitions.show_card(act.title)
 	await Transitions.open()
 	_cue_audio(act)

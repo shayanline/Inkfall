@@ -14,7 +14,7 @@ const _BONE := Color(0.847, 0.831, 0.784, 1)
 const _WHITE := Color(1, 1, 1, 1)
 const _LINE := Color(0.863, 0.847, 0.784, 0.16)
 const _SCRIM := Color(0, 0, 0, 0.92)
-const _CELL := 44.0
+const _CELL := 52.0
 const _GAP := 6
 const _EDGE := 20.0
 const _CAP_VP := Vector2i(1200, 360)   # the caption render target, tall enough that a multi line panel
@@ -250,7 +250,7 @@ func _build_menu() -> void:
 	_menu_views["controls"] = _view_controls()
 	_menu_views["confirm"] = _view_confirm()
 	for v in _menu_views.values():
-		v.custom_minimum_size = Vector2(320, 0)
+		v.custom_minimum_size = Vector2(400, 0)
 		panel.add_child(v)
 	_set_view("main")
 
