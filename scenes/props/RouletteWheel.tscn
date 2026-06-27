@@ -10,15 +10,93 @@ scale = Vector2(1, 0.5)
 
 [node name="Spin" type="Node2D" parent="Disc"]
 
+[node name="Pocket0" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, 30, 0, 29.79715, 3.4827874, 29.191345, 6.918476, 28.190779, 10.260605)
+
+[node name="Pocket1" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, 28.190779, 10.260605, 26.808979, 13.463976, 25.064634, 16.48527, 22.981333, 19.283628)
+
+[node name="Pocket2" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, 22.981333, 19.283628, 20.58725, 21.821209, 17.914759, 24.063696, 15, 25.980762)
+
+[node name="Pocket3" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, 15, 25.980762, 11.882393, 27.546484, 8.604097, 28.739685, 5.2094455, 29.544231)
+
+[node name="Pocket4" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, 5.2094455, 29.544231, 1.744345, 29.949245, -1.744345, 29.949245, -5.2094455, 29.544231)
+
+[node name="Pocket5" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, -5.2094455, 29.544231, -8.604097, 28.739685, -11.882393, 27.546484, -15, 25.980762)
+
+[node name="Pocket6" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, -15, 25.980762, -17.914759, 24.063696, -20.58725, 21.821209, -22.981333, 19.283628)
+
+[node name="Pocket7" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, -22.981333, 19.283628, -25.064634, 16.48527, -26.808979, 13.463976, -28.190779, 10.260605)
+
+[node name="Pocket8" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, -28.190779, 10.260605, -29.191345, 6.918476, -29.79715, 3.4827874, -30, 0)
+
+[node name="Pocket9" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, -30, 0, -29.79715, -3.4827874, -29.191345, -6.918476, -28.190779, -10.260605)
+
+[node name="Pocket10" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, -28.190779, -10.260605, -26.808979, -13.463976, -25.064634, -16.48527, -22.981333, -19.283628)
+
+[node name="Pocket11" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, -22.981333, -19.283628, -20.58725, -21.821209, -17.914759, -24.063696, -15, -25.980762)
+
+[node name="Pocket12" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, -15, -25.980762, -11.882393, -27.546484, -8.604097, -28.739685, -5.2094455, -29.544231)
+
+[node name="Pocket13" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, -5.2094455, -29.544231, -1.744345, -29.949245, 1.744345, -29.949245, 5.2094455, -29.544231)
+
+[node name="Pocket14" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, 5.2094455, -29.544231, 8.604097, -28.739685, 11.882393, -27.546484, 15, -25.980762)
+
+[node name="Pocket15" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, 15, -25.980762, 17.914759, -24.063696, 20.58725, -21.821209, 22.981333, -19.283628)
+
+[node name="Pocket16" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.039215688, 0.039215688, 0.039215688, 1)
+polygon = PackedVector2Array(0, 0, 22.981333, -19.283628, 25.064634, -16.48527, 26.808979, -13.463976, 28.190779, -10.260605)
+
+[node name="Pocket17" type="Polygon2D" parent="Disc/Spin"]
+color = Color(0.78431374, 0, 0.05882353, 1)
+polygon = PackedVector2Array(0, 0, 28.190779, -10.260605, 29.191345, -6.918476, 29.79715, -3.4827874, 30, 0)
+
+[node name="Rim" type="Line2D" parent="Disc"]
+points = PackedVector2Array(32, 0, 31.513847, 5.5567417, 30.070164, 10.944645, 27.712812, 16, 24.513422, 20.569204, 20.569204, 24.513422, 16, 27.712812, 10.944645, 30.070164, 5.5567417, 31.513847, 0, 32, -5.5567417, 31.513847, -10.944645, 30.070164, -16, 27.712812, -20.569204, 24.513422, -24.513422, 20.569204, -27.712812, 16, -30.070164, 10.944645, -31.513847, 5.5567417, -32, 0, -31.513847, -5.5567417, -30.070164, -10.944645, -27.712812, -16, -24.513422, -20.569204, -20.569204, -24.513422, -16, -27.712812, -10.944645, -30.070164, -5.5567417, -31.513847, 0, -32, 5.5567417, -31.513847, 10.944645, -30.070164, 16, -27.712812, 20.569204, -24.513422, 24.513422, -20.569204, 27.712812, -16, 30.070164, -10.944645, 31.513847, -5.5567417, 32, 0)
+width = 4.0
+default_color = Color(0.16470589, 0.18039216, 0.20784314, 1)
+joint_mode = 2
+
 [node name="Hub" type="Polygon2D" parent="Disc"]
-polygon = PackedVector2Array(13.5, 0, 9.55, 9.55, 0, 13.5, -9.55, 9.55, -13.5, 0, -9.55, -9.55, 0, -13.5, 9.55, -9.55)
 color = Color(0.10196, 0.11373, 0.13333, 1)
+polygon = PackedVector2Array(13.5, 0, 9.55, 9.55, 0, 13.5, -9.55, 9.55, -13.5, 0, -9.55, -9.55, 0, -13.5, 9.55, -9.55)
 
 [node name="HubCap" type="Polygon2D" parent="Disc"]
-polygon = PackedVector2Array(3.6, 0, 2.55, 2.55, 0, 3.6, -2.55, 2.55, -3.6, 0, -2.55, -2.55, 0, -3.6, 2.55, -2.55)
 color = Color(0.78824, 0.69804, 0.47843, 1)
+polygon = PackedVector2Array(3.6, 0, 2.55, 2.55, 0, 3.6, -2.55, 2.55, -3.6, 0, -2.55, -2.55, 0, -3.6, 2.55, -2.55)
 
 [node name="Ball" type="Polygon2D" parent="Disc"]
 position = Vector2(24, 0)
-polygon = PackedVector2Array(2.4, 0, 1.7, 1.7, 0, 2.4, -1.7, 1.7, -2.4, 0, -1.7, -1.7, 0, -2.4, 1.7, -1.7)
 color = Color(0.94118, 0.94118, 0.94118, 1)
+polygon = PackedVector2Array(2.4, 0, 1.7, 1.7, 0, 2.4, -1.7, 1.7, -2.4, 0, -1.7, -1.7, 0, -2.4, 1.7, -1.7)
