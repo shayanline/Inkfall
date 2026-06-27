@@ -4,11 +4,14 @@ extends Control
 ## selected tale's blurb, and ENTER THE CITY. Built in code so it carries the Inkfall look with
 ## no scene wiring. Emits entered(index) with the chosen tale.
 
-signal entered(index: int)
+signal entered(story: Story)
 
 const OSWALD := "res://fonts/Oswald.ttf"
+const DEFAULT_LIBRARY := "res://stories/library.tres"
 
-var _stories: Array = []
+@export var library: StoryLibrary
+
+var _stories: Array[Story] = []
 var _selected := 0
 var _tale_buttons: Array = []
 var _subtitle: Label
@@ -17,7 +20,9 @@ var _blurb: Label
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_stories = StoryLibrary.all()
+	if library == null and ResourceLoader.exists(DEFAULT_LIBRARY):
+		library = load(DEFAULT_LIBRARY)
+	_stories = library.stories if library else ([] as Array[Story])
 
 	var bg := ColorRect.new()
 	bg.color = Palette.BG
@@ -42,8 +47,8 @@ func _ready() -> void:
 	vb.add_child(_text("CHOOSE YOUR TALE", 17, Color(0.92, 0.9, 0.84, 0.55), 0.38))
 
 	for i in _stories.size():
-		var s: Dictionary = _stories[i]
-		var b := _menu_button(String(s["name"]) + "   ·   " + String(s["tagline"]))
+		var s: Story = _stories[i]
+		var b := _menu_button(s.title + "   ·   " + s.subtitle)
 		var idx := i
 		b.pressed.connect(func(): _select(idx))
 		_tale_buttons.append(b)
@@ -53,17 +58,18 @@ func _ready() -> void:
 	var enter := _menu_button("ENTER THE CITY")
 	enter.pressed.connect(func():
 		AudioDirector.whoosh()
-		entered.emit(_selected))
+		entered.emit(_stories[_selected]))
 	vb.add_child(enter)
 
-	_select(0)
+	if not _stories.is_empty():
+		_select(0)
 
 
 func _select(i: int) -> void:
 	_selected = i
-	var s: Dictionary = _stories[i]
-	_subtitle.text = String(s["story"].get("subtitle", ""))
-	_blurb.text = String(s["story"].get("blurb", ""))
+	var s: Story = _stories[i]
+	_subtitle.text = s.subtitle
+	_blurb.text = s.blurb
 	for j in _tale_buttons.size():
 		var b: Button = _tale_buttons[j]
 		var sb: StyleBoxFlat = b.get_theme_stylebox("normal")

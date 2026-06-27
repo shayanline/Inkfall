@@ -21,8 +21,8 @@ config/icon="res://icon.svg"
 
 Palette="*res://autoload/Palette.gd"
 AudioDirector="*res://autoload/AudioDirector.gd"
-Transitions="*res://autoload/Transitions.tscn"
-SceneDirector="*res://autoload/SceneDirector.gd"
+Transitions="*res://scenes/transitions/Transitions.tscn"
+GameState="*res://autoload/GameState.gd"
 
 [display]
 
