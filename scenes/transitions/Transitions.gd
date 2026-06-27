@@ -13,6 +13,11 @@ func _set_progress(v: float) -> void:
 	_ink.progress = v
 
 
+## cover the screen with ink at once (no wipe), used to open a tale on the story-title card.
+func cover() -> void:
+	_set_progress(1.0)
+
+
 func close(dur := -1.0) -> void:
 	if dur < 0.0:
 		dur = Palette.TRANS_IN

@@ -41,6 +41,7 @@ var _cur_act := 0
 var _unlocked := false
 var _playing := false
 var _ended := false
+var _controls_seen := false
 var _poster_image: Image
 
 
@@ -382,8 +383,17 @@ func _build_poster() -> void:
 func begin_play() -> void:
 	_playing = true
 	_ended = false
-	create_tween().tween_property(_tap, "modulate:a", 1.0, 0.6)
+	if not _controls_seen:
+		create_tween().tween_property(_tap, "modulate:a", 1.0, 0.6)
 	_refresh_actsel()
+
+
+## the control hint shows on the first line only, then retires after the first advance, as in Inkfall.
+func mark_controls_seen() -> void:
+	if _controls_seen:
+		return
+	_controls_seen = true
+	create_tween().tween_property(_tap, "modulate:a", 0.0, 0.4)
 
 
 func build_nav(titles: Array) -> void:
@@ -434,7 +444,8 @@ func resume_from_end() -> void:
 	_playing = true
 	_navdrop.visible = false
 	_refresh_actsel()
-	set_tap_visible(true)
+	if not _controls_seen:
+		set_tap_visible(true)
 
 
 ## tex is the clean pulled frame shown in the modal, image is the composed poster written on SAVE.

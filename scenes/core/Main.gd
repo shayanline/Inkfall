@@ -20,13 +20,17 @@ var _playing := false
 var _busy := false
 var _ended := false
 var _paused := false
+var _snapping := false
 var _shake := 0.0
+var _xfade: TextureRect
 
 
 func _ready() -> void:
 	_post_mat = _post.material
 	_post_mat.set_shader_parameter("screen_size", get_viewport_rect().size)
 	_camera.position = get_viewport_rect().size * 0.5
+	_build_void_fill()
+	_build_crossfade()
 
 	_start.entered.connect(_on_enter)
 	_hud.nav_selected.connect(_on_nav_selected)
@@ -36,18 +40,54 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_on_resize)
 
 
+## a wide dark plate behind the whole world, so the first-act establishing push in (which opens on a
+## wider field than the backdrop fills) reads as continuous night rather than a hard black border.
+func _build_void_fill() -> void:
+	var fill := ColorRect.new()
+	fill.color = Color(0.1, 0.11, 0.14)
+	fill.position = Vector2(-1200, -1100)
+	fill.size = Vector2(4400, 3300)
+	fill.z_index = -200
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_world.add_child(fill)
+
+
+## a full screen overlay between the world and the HUD that holds a snapshot of the previous beat and
+## dissolves it into the new one (Inkfall's beat crossfade).
+func _build_crossfade() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 5
+	add_child(layer)
+	_xfade = TextureRect.new()
+	_xfade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_xfade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_xfade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_xfade.stretch_mode = TextureRect.STRETCH_SCALE
+	_xfade.modulate = Color(1, 1, 1, 0)
+	layer.add_child(_xfade)
+
+
 # --- flow ----------------------------------------------------------------------------------
 
 func _on_enter(story: Story) -> void:
 	GameState.load_story(story)
 	_start.visible = false
+	_hud.build_nav(GameState.act_titles())
+	await _open_story(story)
+	_hud.begin_play()
+	_playing = true
+
+
+## the opening, the way Inkfall begins a tale: cover to black, hold the story-title card (the story
+## subtitle), then start the score and open the first act behind its own card.
+func _open_story(story: Story) -> void:
+	Transitions.cover()
+	var title := story.subtitle if story.subtitle != "" else story.title
+	await Transitions.show_card(title, Palette.TITLE_HOLD)
 	AudioDirector.start()
 	if story.music != "":
 		AudioDirector.play_music(story.music, story.music_vol)
-	_hud.begin_play()
-	_hud.build_nav(GameState.act_titles())
 	await _enter_act(0, true)
-	_playing = true
 
 
 func _enter_act(index: int, first: bool) -> void:
@@ -55,8 +95,10 @@ func _enter_act(index: int, first: bool) -> void:
 	GameState.go_to_act(index)
 	var act := GameState.current_act()
 	_swap_board(act)
-	_zoom_in()
 	if first:
+		# the screen is already black from the story-title card, so show the first act card here too
+		await Transitions.show_card(act.title, Palette.OPEN_CARD_HOLD)
+		_zoom_in()
 		await Transitions.open()
 	_cue_audio(act)
 	AudioDirector.whoosh()
@@ -82,8 +124,10 @@ func _cue_audio(act: Act) -> void:
 
 
 func _zoom_in() -> void:
-	_camera.zoom = Vector2(1.06, 1.06)
-	create_tween().tween_property(_camera, "zoom", Vector2.ONE, 3.2).set_ease(Tween.EASE_OUT)
+	# the establishing push in, Inkfall ran it on the first act only. Camera2D zoom below 1 shows a
+	# wider field, so settling to 1.0 reads as a slow push in to the framed view.
+	_camera.zoom = Vector2(0.93, 0.93)
+	create_tween().tween_property(_camera, "zoom", Vector2.ONE, 3.4).set_ease(Tween.EASE_OUT)
 
 
 ## fire the current line's fx through GameState, so the board (and its objects) react via signal.
@@ -93,16 +137,49 @@ func _fire_line_fx() -> void:
 		return
 	for fx in line.fx:
 		GameState.fire_fx(fx)
+		_play_fx_sound(fx)
+
+
+## play the sound cue for a line fx, mirroring Inkfall's central narration audio (the board handles
+## the visual side through GameState.fire_fx). Manual lightning (the L key) stays silent, as it did
+## in the original, only the scripted lightning beat brings thunder.
+func _play_fx_sound(fx: String) -> void:
+	match fx:
+		"muzzle":
+			AudioDirector.gun()
+			await get_tree().create_timer(0.23).timeout
+			AudioDirector.gun()
+		"lightning":
+			await get_tree().create_timer(randf_range(0.2, 0.6)).timeout
+			AudioDirector.thunder()
+		"hammer":
+			AudioDirector.gun_cock()
+		"lighter":
+			AudioDirector.lid_open()
+			await get_tree().create_timer(0.65).timeout
+			AudioDirector.flint()
 
 
 func advance() -> void:
-	if not _playing or _busy or _ended or _paused:
+	if not _playing or _busy or _ended or _paused or _snapping:
 		return
 	if GameState.has_next_line():
+		_hud.mark_controls_seen()
 		AudioDirector.duck(0.45)
+		# snapshot the current beat (world plus post, without the HUD so the caption never ghosts),
+		# advance the line, then dissolve the snapshot into the new beat
+		_snapping = true
+		_hud.visible = false
+		await RenderingServer.frame_post_draw
+		var snap := get_viewport().get_texture().get_image()
+		_hud.visible = true
+		_snapping = false
 		GameState.next_line()
 		GameState.notify_line()
 		_fire_line_fx()
+		_xfade.texture = ImageTexture.create_from_image(snap)
+		_xfade.modulate.a = 1.0
+		create_tween().tween_property(_xfade, "modulate:a", 0.0, Palette.BEAT_FADE)
 	elif not GameState.at_last_act():
 		_to_act(GameState.act_index + 1)
 	else:
@@ -123,7 +200,6 @@ func _enter_act_covered(index: int) -> void:
 	_swap_board(act)
 	await Transitions.show_card(act.title)
 	await Transitions.open()
-	_zoom_in()
 	_cue_audio(act)
 	_hud.set_scene_tag(act.title)
 	_hud.set_current_act(GameState.act_index)
@@ -139,19 +215,36 @@ func _end_story() -> void:
 	_hud.set_tap_visible(false)
 	AudioDirector.duck(0.8)
 	await Transitions.close()
-	if _board:
-		_board.queue_free()
-		_board = null
+	# Inkfall does not black out at THE END: it keeps the final scene, frozen and desaturated, and
+	# fades THE END over it. So we keep the board alive, grade it out, and reopen the wipe at once.
 	AudioDirector.whoosh()
+	_set_ended_grade(true)
+	Transitions.clear()
 	await Transitions.show_end()
 	_hud.end_reached()
 	_busy = false
+
+
+## push the post grade to a full desaturated, grainier finish for THE END, and back for normal play.
+func _set_ended_grade(on: bool) -> void:
+	if _post_mat == null:
+		return
+	var d0 = _post_mat.get_shader_parameter("desaturate")
+	var g0 = _post_mat.get_shader_parameter("grain_amount")
+	if typeof(d0) != TYPE_FLOAT:
+		d0 = 0.82
+	if typeof(g0) != TYPE_FLOAT:
+		g0 = 0.05
+	var tw := create_tween().set_parallel(true)
+	tw.tween_method(func(v: float): _post_mat.set_shader_parameter("desaturate", v), d0, 1.0 if on else 0.82, 0.8)
+	tw.tween_method(func(v: float): _post_mat.set_shader_parameter("grain_amount", v), g0, 0.15 if on else 0.05, 0.8)
 
 
 func _on_nav_selected(index: int) -> void:
 	if _busy:
 		return
 	_ended = false
+	_set_ended_grade(false)
 	_hud.resume_from_end()
 	Transitions.hide_end()
 	await _to_act(index)
@@ -177,6 +270,7 @@ func _on_exit_requested() -> void:
 		_board.queue_free()
 		_board = null
 	Transitions.clear()
+	_set_ended_grade(false)
 	_hud.hide_caption()
 	AudioDirector.reset()
 	if GameState.story:
