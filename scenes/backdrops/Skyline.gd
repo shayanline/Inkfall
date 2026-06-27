@@ -13,12 +13,23 @@ func on_object_params(p: Dictionary) -> void:
 
 
 func build(board_size: Vector2, ground_y: float) -> void:
+	_add_sky(board_size, ground_y)
 	var cfgs := _resolved_layers()
 	var sky := Sprite2D.new()
 	sky.texture = BackdropBaker.bake_skyline(board_size, ground_y, _seed, cfgs)
 	sky.centered = false
 	add_child(sky)
 	_add_wet_floor(board_size, ground_y)
+
+
+## a faint night sky that lifts toward the horizon, so the dark building silhouettes read.
+func _add_sky(vp: Vector2, g: float) -> void:
+	var sky := Polygon2D.new()
+	sky.polygon = PackedVector2Array([Vector2(0, 0), Vector2(vp.x, 0), Vector2(vp.x, g), Vector2(0, g)])
+	var top := Color(0.03, 0.04, 0.07)
+	var horizon := Color(0.16, 0.17, 0.22)
+	sky.vertex_colors = PackedColorArray([top, top, horizon, horizon])
+	add_child(sky)
 
 
 func _resolved_layers() -> Array:

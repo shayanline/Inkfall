@@ -14,6 +14,7 @@ func build(board_size: Vector2, ground_y: float) -> void:
 	var vp := board_size
 	var g := ground_y
 
+	_grad_rect(0, 0, vp.x, g, Color(0.03, 0.04, 0.07), Color(0.17, 0.18, 0.24))
 	_grad_rect(0, vp.y * 0.5, vp.x, vp.y * 0.24, Color(0.157, 0.18, 0.235, 0.0), Color(0.275, 0.314, 0.412, 0.35))
 
 	var c0 := {"top": 0.4, "shade": Palette.FAR_INK, "min_w": 40.0, "max_w": 100.0, "min_h": 0.2, "max_h": 0.45, "win": 0.22}

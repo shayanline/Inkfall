@@ -23,6 +23,7 @@ Palette="*res://autoload/Palette.gd"
 AudioDirector="*res://autoload/AudioDirector.gd"
 Transitions="*res://scenes/transitions/Transitions.tscn"
 GameState="*res://autoload/GameState.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [display]
 
@@ -31,6 +32,14 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation="landscape"
+
+[dotnet]
+
+project/assembly_name="Noir"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 
 [input]
 

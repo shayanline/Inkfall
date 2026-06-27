@@ -1,13 +1,26 @@
-# Godot 4
+# Godot 4+ specific ignores
 .godot/
+
+# Godot legacy / general
 .import/
 export.cfg
 export_presets.cfg
 
+# Imported translations (auto generated from CSV)
+*.translation
+
+# Mono / .NET (this project is GDScript, but the Mono build writes these)
+.mono/
+data_*/
+mono_crash.*.json
+
 # macOS
 .DS_Store
 
-# Exports
+# Exports and local builds
 build/
 *.dmg
 *.app
+*.exe
+*.pck
+*.zip

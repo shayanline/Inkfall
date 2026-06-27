@@ -23,7 +23,7 @@ var _shake := 0.0
 
 
 func _ready() -> void:
-	_wash.color = Color(0.28, 0.29, 0.34)
+	_wash.color = Color(0.46, 0.48, 0.56)
 	_world_env.environment = _make_environment()
 	_post_mat = _make_post_material()
 	_post.material = _post_mat

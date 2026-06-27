@@ -16,13 +16,15 @@ func build(board_size: Vector2, ground_y: float) -> void:
 	var vx := vp.x * 0.5
 	var vy := vp.y * 0.4
 
+	_grad_rect(0, 0, vp.x, g, Color(0.04, 0.05, 0.08), Color(0.15, 0.16, 0.21))
+
 	var cfg := {"top": 0.3, "shade": Palette.FAR_INK, "min_w": 50.0, "max_w": 110.0, "min_h": 0.3, "max_h": 0.55, "win": 0.18}
 	var far := Sprite2D.new()
 	far.texture = BackdropBaker.bake_skyline(vp, vp.y * 0.62, _seed, [cfg])
 	far.centered = false
 	add_child(far)
 
-	_grad_rect(vx - vp.x * 0.12, vy, vp.x * 0.24, g - vy, Color8(18, 20, 27), Color8(6, 7, 8))
+	_grad_rect(vx - vp.x * 0.12, vy, vp.x * 0.24, g - vy, Color8(40, 44, 58), Color8(12, 14, 20))
 
 	var wall_top := Color8(16, 10, 6)
 	var wall_bot := Color8(5, 3, 2)
