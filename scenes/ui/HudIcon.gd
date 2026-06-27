@@ -24,21 +24,24 @@ func set_tint(c: Color) -> void:
 
 func _draw() -> void:
 	var c := size * 0.5
+	# the glyph fills about 0.42 of the chip, scaling with the cell so it never looks lost in it
+	var u := minf(size.x, size.y) * 0.42
+	var lw := maxf(2.0, u * 0.12)
 	match kind:
 		Kind.MENU:
-			var w := 16.0
-			for dy in [-5.0, 0.0, 5.0]:
-				draw_line(Vector2(c.x - w * 0.5, c.y + dy), Vector2(c.x + w * 0.5, c.y + dy), tint, _W, true)
+			var w := u
+			for dy in [-u * 0.32, 0.0, u * 0.32]:
+				draw_line(Vector2(c.x - w * 0.5, c.y + dy), Vector2(c.x + w * 0.5, c.y + dy), tint, lw, true)
 		Kind.FULLSCREEN:
-			var h := 8.0
-			var ext := 9.0
+			var h := u * 0.45
+			var ext := u * 0.5
 			# top-left and bottom-right corner brackets
-			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext + h, c.y - ext), tint, _W, true)
-			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext, c.y - ext + h), tint, _W, true)
-			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext - h, c.y + ext), tint, _W, true)
-			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext, c.y + ext - h), tint, _W, true)
+			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext + h, c.y - ext), tint, lw, true)
+			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext, c.y - ext + h), tint, lw, true)
+			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext - h, c.y + ext), tint, lw, true)
+			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext, c.y + ext - h), tint, lw, true)
 		Kind.POSTER:
-			var r := Rect2(c.x - 8.5, c.y - 7.0, 17.0, 14.0)
+			var r := Rect2(c.x - u * 0.5, c.y - u * 0.42, u, u * 0.84)
 			draw_polyline(PackedVector2Array([
 				r.position, Vector2(r.end.x, r.position.y), r.end,
-				Vector2(r.position.x, r.end.y), r.position]), tint, _W, true)
+				Vector2(r.position.x, r.end.y), r.position]), tint, lw, true)

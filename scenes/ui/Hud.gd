@@ -324,7 +324,36 @@ func _menu_item(text: String, variation: StringName, on_press: Callable) -> Butt
 	b.text = text
 	b.focus_mode = Control.FOCUS_NONE
 	b.pressed.connect(on_press)
+	# the red diamond markers from the legacy: always lit on the primary action, lit on hover otherwise
+	var rest := 1.0 if variation == &"MenuItemPrimary" else 0.0
+	var dl := _menu_dot(0.08)
+	var dr := _menu_dot(0.92)
+	b.add_child(dl)
+	b.add_child(dr)
+	dl.modulate.a = rest
+	dr.modulate.a = rest
+	b.mouse_entered.connect(func():
+		dl.modulate.a = 1.0
+		dr.modulate.a = 1.0)
+	b.mouse_exited.connect(func():
+		dl.modulate.a = rest
+		dr.modulate.a = rest)
 	return b
+
+
+func _menu_dot(ax: float) -> Label:
+	var d := Label.new()
+	d.text = "\u25C6"
+	d.add_theme_font_size_override("font_size", 11)
+	d.add_theme_color_override("font_color", Color(0.882, 0, 0.063))
+	d.anchor_left = ax
+	d.anchor_right = ax
+	d.anchor_top = 0.5
+	d.anchor_bottom = 0.5
+	d.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	d.grow_vertical = Control.GROW_DIRECTION_BOTH
+	d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return d
 
 
 func _key_row(key: String, role: String) -> Control:

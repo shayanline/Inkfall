@@ -1,15 +1,23 @@
-[gd_resource type="Theme" load_steps=19 format=3]
+[gd_resource type="Theme" load_steps=21 format=3]
 
 [ext_resource type="FontFile" path="res://fonts/Oswald.ttf" id="1_oswald"]
 [ext_resource type="FontFile" path="res://fonts/SpecialElite.ttf" id="2_elite"]
 
+[sub_resource type="FontVariation" id="oswald_menu"]
+base_font = ExtResource("1_oswald")
+spacing_glyph = 6
+
+[sub_resource type="FontVariation" id="oswald_title"]
+base_font = ExtResource("1_oswald")
+spacing_glyph = 11
+
 [sub_resource type="StyleBoxEmpty" id="empty"]
 
 [sub_resource type="StyleBoxEmpty" id="menu_item_pad"]
-content_margin_left = 16.0
-content_margin_top = 9.0
-content_margin_right = 16.0
-content_margin_bottom = 9.0
+content_margin_left = 26.0
+content_margin_top = 10.0
+content_margin_right = 26.0
+content_margin_bottom = 10.0
 
 [sub_resource type="StyleBoxFlat" id="story_normal"]
 bg_color = Color(0, 0, 0, 0)
@@ -178,8 +186,8 @@ shadow_offset = Vector2(4, 4)
 
 [resource]
 RichTextLabel/colors/default_color = Color(0.067, 0.067, 0.067, 1)
-RichTextLabel/font_sizes/bold_font_size = 18
-RichTextLabel/font_sizes/normal_font_size = 18
+RichTextLabel/font_sizes/bold_font_size = 16
+RichTextLabel/font_sizes/normal_font_size = 16
 RichTextLabel/fonts/bold_font = ExtResource("2_elite")
 RichTextLabel/fonts/normal_font = ExtResource("2_elite")
 Title/base_type = &"Label"
@@ -219,7 +227,7 @@ TapNote/fonts/font = ExtResource("1_oswald")
 MenuTitle/base_type = &"Label"
 MenuTitle/colors/font_color = Color(0.925, 0.902, 0.839, 1)
 MenuTitle/font_sizes/font_size = 34
-MenuTitle/fonts/font = ExtResource("1_oswald")
+MenuTitle/fonts/font = SubResource("oswald_title")
 MenuNote/base_type = &"Label"
 MenuNote/colors/font_color = Color(0.925, 0.902, 0.839, 0.6)
 MenuNote/font_sizes/font_size = 17
@@ -321,8 +329,8 @@ MenuItem/base_type = &"Button"
 MenuItem/colors/font_color = Color(0.925, 0.902, 0.839, 0.82)
 MenuItem/colors/font_hover_color = Color(1, 1, 1, 1)
 MenuItem/colors/font_pressed_color = Color(1, 1, 1, 1)
-MenuItem/font_sizes/font_size = 22
-MenuItem/fonts/font = ExtResource("1_oswald")
+MenuItem/font_sizes/font_size = 24
+MenuItem/fonts/font = SubResource("oswald_menu")
 MenuItem/styles/focus = SubResource("empty")
 MenuItem/styles/normal = SubResource("menu_item_pad")
 MenuItem/styles/hover = SubResource("menu_item_pad")
@@ -331,8 +339,8 @@ MenuItemPrimary/base_type = &"Button"
 MenuItemPrimary/colors/font_color = Color(1, 1, 1, 1)
 MenuItemPrimary/colors/font_hover_color = Color(1, 1, 1, 1)
 MenuItemPrimary/colors/font_pressed_color = Color(1, 1, 1, 1)
-MenuItemPrimary/font_sizes/font_size = 22
-MenuItemPrimary/fonts/font = ExtResource("1_oswald")
+MenuItemPrimary/font_sizes/font_size = 24
+MenuItemPrimary/fonts/font = SubResource("oswald_menu")
 MenuItemPrimary/styles/focus = SubResource("empty")
 MenuItemPrimary/styles/normal = SubResource("menu_item_pad")
 MenuItemPrimary/styles/hover = SubResource("menu_item_pad")
@@ -341,8 +349,8 @@ MenuItemDanger/base_type = &"Button"
 MenuItemDanger/colors/font_color = Color(0.882, 0.337, 0.353, 0.9)
 MenuItemDanger/colors/font_hover_color = Color(0.882, 0, 0.063, 1)
 MenuItemDanger/colors/font_pressed_color = Color(0.882, 0, 0.063, 1)
-MenuItemDanger/font_sizes/font_size = 22
-MenuItemDanger/fonts/font = ExtResource("1_oswald")
+MenuItemDanger/font_sizes/font_size = 24
+MenuItemDanger/fonts/font = SubResource("oswald_menu")
 MenuItemDanger/styles/focus = SubResource("empty")
 MenuItemDanger/styles/normal = SubResource("menu_item_pad")
 MenuItemDanger/styles/hover = SubResource("menu_item_pad")
