@@ -110,14 +110,11 @@ func on_tick() -> void:
 	pass
 
 
-## the board calls these as the story advances; subclasses react.
+## the board fans these out by signal as the story advances; subclasses override and call super.
+## both refresh flag-driven visibility, so a body that appears on the blood flag shows on the fx.
 func on_line(_idx: int) -> void:
 	_refresh_visibility()
 
 
-func on_fx(_name: String) -> void:
-	pass
-
-
-func on_flags_changed() -> void:
+func on_fx(_event: String) -> void:
 	_refresh_visibility()

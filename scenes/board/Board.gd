@@ -6,6 +6,9 @@ extends Node2D
 ## a global CanvasModulate), so there is no per frame repaint. Main drives it by act and line.
 
 signal shake_requested(amount: float)
+## fanned out to the spawned objects; each object connects its on_line / on_fx on spawn.
+signal line_changed(index: int)
+signal fx(event: String)
 
 const RAIN_SCENE := preload("res://scenes/effects/RainField.tscn")
 const LIGHTNING_SCENE := preload("res://scenes/effects/Lightning.tscn")
@@ -22,7 +25,6 @@ var _line_start := 0.0
 
 var flags := {}
 
-var _objects: Array[BoardObject] = []
 var _key_light: PointLight2D
 var _moon_light: PointLight2D
 var _rain: RainField
@@ -40,6 +42,8 @@ func _ready() -> void:
 	unit = minf(size.x, size.y) / BoardObject.DESIGN_HEIGHT
 	ground_y = act.ground * size.y
 	_line_start = _now()
+	GameState.line_changed.connect(_on_state_line)
+	GameState.fx_fired.connect(_on_state_fx)
 	_build_lighting()
 	_build_content()
 	_build_weather()
@@ -101,7 +105,8 @@ func _spawn(p: Placement, base_z: int) -> BoardObject:
 	add_child(obj)
 	obj.place()
 	obj.z_index = base_z + obj.depth
-	_objects.append(obj)
+	line_changed.connect(obj.on_line)
+	fx.connect(obj.on_fx)
 	return obj
 
 
@@ -119,14 +124,13 @@ func _build_weather() -> void:
 
 # --- flow ----------------------------------------------------------------------------------
 
-func set_line(idx: int) -> void:
+func _on_state_line(idx: int) -> void:
 	line_index = idx
 	_line_start = _now()
-	for o in _objects:
-		o.on_line(idx)
+	line_changed.emit(idx)
 
 
-func on_fx(event: String) -> void:
+func _on_state_fx(event: String) -> void:
 	match event:
 		"muzzle":
 			flags["muzzle"] = true
@@ -136,7 +140,4 @@ func on_fx(event: String) -> void:
 		"lightning":
 			if _lightning:
 				_lightning.strike()
-	for o in _objects:
-		o.on_flags_changed()
-		o.on_fx(event)
-	GameState.fire_fx(event)
+	fx.emit(event)

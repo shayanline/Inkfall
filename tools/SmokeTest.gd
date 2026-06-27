@@ -16,9 +16,10 @@ func _ready() -> void:
 			await get_tree().process_frame
 			await get_tree().process_frame
 			for li in act.lines.size():
-				board.set_line(li)
+				GameState.line_index = li
+				GameState.notify_line()
 				for fx in act.lines[li].fx:
-					board.on_fx(fx)
+					GameState.fire_fx(fx)
 				await get_tree().process_frame
 			print("OK  ", story.subtitle, "  act ", i, " (", act.title, ")  nodes=", board.get_child_count())
 			board.queue_free()

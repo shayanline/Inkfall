@@ -16,6 +16,13 @@ signal nav_selected(index: int)
 
 func _ready() -> void:
 	_mute.pressed.connect(_on_mute)
+	GameState.line_changed.connect(_on_line_changed)
+
+
+func _on_line_changed(_idx: int) -> void:
+	var line := GameState.current_line()
+	if line:
+		show_caption(line.text)
 
 
 func _on_mute() -> void:

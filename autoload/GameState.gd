@@ -3,7 +3,8 @@ extends Node
 ## touches the visual tree, Main reads it and drives the view. Stories stay portable data
 ## (typed Story / Act / Line resources), so telling a tale is writing data, not board code.
 
-signal fx_fired(name: String)
+signal line_changed(index: int)
+signal fx_fired(event: String)
 
 var story: Story
 var act_index := 0
@@ -67,6 +68,12 @@ func act_titles() -> Array[String]:
 	return out
 
 
-## fired by Main when a line carries fx, so any object on the board can react.
+## announce the current line so the board, its objects and the hud react. Called on each advance
+## and when an act opens, so the initial line is delivered through the same signal as the rest.
+func notify_line() -> void:
+	line_changed.emit(line_index)
+
+
+## fired by the controller when a line carries fx, so the board and any object on it can react.
 func fire_fx(event: String) -> void:
 	fx_fired.emit(event)

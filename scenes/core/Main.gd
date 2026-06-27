@@ -55,7 +55,8 @@ func _enter_act(index: int, first: bool) -> void:
 	_cue_audio(act)
 	AudioDirector.whoosh()
 	_hud.set_scene_tag(act.title)
-	_show_line()
+	GameState.notify_line()
+	_fire_line_fx()
 	_busy = false
 
 
@@ -78,16 +79,13 @@ func _zoom_in() -> void:
 	create_tween().tween_property(_camera, "zoom", Vector2.ONE, 3.2).set_ease(Tween.EASE_OUT)
 
 
-func _show_line() -> void:
+## fire the current line's fx through GameState, so the board (and its objects) react via signal.
+func _fire_line_fx() -> void:
 	var line := GameState.current_line()
 	if line == null:
 		return
-	if _board:
-		_board.set_line(GameState.line_index)
-	_hud.show_caption(line.text)
 	for fx in line.fx:
-		if _board:
-			_board.on_fx(fx)
+		GameState.fire_fx(fx)
 
 
 func advance() -> void:
@@ -96,7 +94,8 @@ func advance() -> void:
 	if GameState.has_next_line():
 		AudioDirector.duck(0.45)
 		GameState.next_line()
-		_show_line()
+		GameState.notify_line()
+		_fire_line_fx()
 	elif not GameState.at_last_act():
 		_to_act(GameState.act_index + 1)
 	else:
@@ -120,7 +119,8 @@ func _enter_act_covered(index: int) -> void:
 	_zoom_in()
 	_cue_audio(act)
 	_hud.set_scene_tag(act.title)
-	_show_line()
+	GameState.notify_line()
+	_fire_line_fx()
 	_busy = false
 
 
@@ -166,8 +166,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("advance"):
 		advance()
-	elif event.is_action_pressed("lightning") and _board:
-		_board.on_fx("lightning")
+	elif event.is_action_pressed("lightning"):
+		GameState.fire_fx("lightning")
 
 
 func _on_resize() -> void:
