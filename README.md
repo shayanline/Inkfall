@@ -1,6 +1,6 @@
-# Noir
+# Inkfall
 
-Noir is a noir crime motion comic, a storytelling board where rain soaked stories are
+Inkfall is a noir crime motion comic, a storytelling board where rain soaked stories are
 staged and played one beat at a time. You tap through the night, the captions fall like
 narration, and the only colour is the colour that bleeds.
 
@@ -60,7 +60,7 @@ To add a new object or backdrop, make a scene under `scenes/actors`, `scenes/pro
 stories/                the tales (Story .tres) + the picker library.tres
 src/resources/          the data types: Story, Act, Line, Placement, StoryLibrary
 src/util/               LightTex (light textures), BackdropBaker (skyline baking)
-themes/                 noir_theme.tres, the shared UI theme (set as the project default)
+themes/                 inkfall_theme.tres, the shared UI theme (set as the project default)
 scenes/
   core/Main.*           the view controller: the authored global look (wash, bloom, camera, post)
                         and the signal driven flow
@@ -80,7 +80,7 @@ audio/ fonts/           sound and type
 
 ## Credits
 
-The stories and the noir look began life in
-[Inkfall](https://github.com/masoudqashqai/Inkfall), an HTML canvas storytelling prototype
-(see the [live build](https://masoudqashqai.github.io/Inkfall/)), and were rebuilt here as a
-native Godot board.
+Inkfall began as an HTML canvas storytelling prototype,
+[the original Inkfall](https://github.com/masoudqashqai/Inkfall)
+(see the [live build](https://masoudqashqai.github.io/Inkfall/)). This is its native Godot
+rebuild: the stories and the noir look carried over, the board rebuilt on real Godot 2D.

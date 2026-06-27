@@ -42,13 +42,13 @@ alignment = 1
 layout_mode = 2
 theme_type_variation = &"Title"
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "NO"
+text = "INK"
 
 [node name="Tail" type="Label" parent="Center/VBox/Title"]
 layout_mode = 2
 theme_type_variation = &"Title"
 theme_override_colors/font_color = Color(0.882, 0, 0.063, 1)
-text = "IR"
+text = "FALL"
 
 [node name="Subtitle" type="Label" parent="Center/VBox"]
 layout_mode = 2

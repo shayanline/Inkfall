@@ -1,6 +1,6 @@
 class_name Board
 extends Node2D
-## The act host, the native equal of the old NoirPanel. It builds the act as a real scene tree:
+## The act host. It builds the act as a real scene tree:
 ## the backdrop, the light fixtures, the cast (each a BoardObject scene), plus the key light, the
 ## moon and the weather as Godot nodes. Lighting is native (PointLight2D / DirectionalLight2D over
 ## a global CanvasModulate), so there is no per frame repaint. Main drives it by act and line.

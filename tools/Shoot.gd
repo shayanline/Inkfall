@@ -4,7 +4,7 @@ extends Node
 ##   Godot --path . tools/Shoot.tscn
 ## Not part of the game. Safe to delete.
 
-const SHOT_DIR := "/tmp/noir_shots"
+const SHOT_DIR := "/tmp/inkfall_shots"
 
 var _main: Node
 

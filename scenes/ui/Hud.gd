@@ -566,7 +566,7 @@ func _save_poster() -> void:
 		return
 	var dir := "user://posters"
 	DirAccess.make_dir_recursive_absolute(dir)
-	var path := "%s/noir_%d.png" % [dir, Time.get_unix_time_from_system()]
+	var path := "%s/inkfall_%d.png" % [dir, Time.get_unix_time_from_system()]
 	if _poster_image.save_png(path) == OK:
 		_poster_save.text = "SAVED"
 		_poster_save.disabled = true

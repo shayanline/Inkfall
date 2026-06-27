@@ -198,7 +198,7 @@ func _on_poster_requested() -> void:
 	_hud.show_poster(frame_tex, save_img)
 
 
-## compose a downloadable noir poster from the captured frame: an inked white border, the NOIR
+## compose a downloadable noir poster from the captured frame: an inked white border, the INKFALL
 ## wordmark, the current caption as the tagline, and a footer. Built in a SubViewport so it uses the
 ## shared fonts and renders to a saveable image.
 func _compose_poster(frame: Image) -> Image:
@@ -268,7 +268,7 @@ func _compose_poster(frame: Image) -> Image:
 	foot.position = Vector2(0, ph - 44)
 	foot.size = Vector2(pw, 0)
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	foot.text = "BASIN CITY  ·  NOIR"
+	foot.text = "BASIN CITY  ·  INKFALL"
 	root.add_child(foot)
 
 	await RenderingServer.frame_post_draw

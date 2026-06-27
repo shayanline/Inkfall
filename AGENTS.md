@@ -1,4 +1,4 @@
-# NOIR, board operating guide
+# INKFALL, board operating guide
 
 A noir crime motion comic told on a storytelling board, built natively in Godot 4.7. Stories are
 typed data and the look is shared, so telling a new tale is writing a resource, not board code. This
@@ -43,7 +43,7 @@ src/
     LightTex.gd            loads and hands out light_radial.tres
     BackdropBaker.gd       bakes the seeded skyline (buildings plus windows) to a texture
 themes/
-  noir_theme.tres        the shared UI theme (fonts, colours, styleboxes, type variations),
+  inkfall_theme.tres     the shared UI theme (fonts, colours, styleboxes, type variations),
                          set as the project default theme in project.godot
 autoload/              globals (Transitions.tscn is also registered as an autoload scene)
   GameState.gd           the flow and data model, and the signal source: emits line_changed and
@@ -58,7 +58,7 @@ scenes/
     Board.gd               the act host: builds the backdrop, lights, cast and weather as nodes and
                            sets up the key and moon lights. Reacts to GameState.line_changed and
                            fx_fired, and fans them out to its objects by signal (plus the
-                           board_object group). The old NoirPanel.
+                           board_object group).
     BoardObject.gd         base for everything placed on the board (placement, params, hooks)
   backdrops/            Skyline, Alley, Rooftop, Room (BoardBackdrop) + BoardBackdrop.gd
   lights/              Lamp, Neon, Bulb (BoardLight) + BoardLight.gd (drives a PointLight2D)
@@ -139,7 +139,7 @@ blood red) and `fx` (`muzzle`, `blood`, `lightning`, `hammer`, `lighter`).
   script before adding one.
 - Stories are data, behaviour is data. Keep the look centralised: lighting goes through native 2D
   lights over the shared wash, colours come from `Palette`, and the UI look comes from the shared
-  `themes/noir_theme.tres` (use its type variations, do not add per control theme overrides).
+  `themes/inkfall_theme.tres` (use its type variations, do not add per control theme overrides).
 - Do it the Godot way: author geometry as scene nodes, author motion as `AnimationPlayer` animations
   or `Tween`s, and communicate by signal. Do not hand code per frame `sin()` animation, do not push
   state into nodes that could react to a signal, and do not hand roll a lighting model per object.

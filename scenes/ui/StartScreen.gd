@@ -1,6 +1,6 @@
 class_name StartScreen
 extends Control
-## The opening screen: the NOIR wordmark, the selected tale's subtitle and blurb, a horizontal tale
+## The opening screen: the INKFALL wordmark, the selected tale's subtitle and blurb, a horizontal tale
 ## picker (every story in the library, each a framed card with its name and tagline) and ENTER THE
 ## CITY. The layout and look are authored in the scene and the shared theme, this script fills in the
 ## tales and the chosen blurb and tracks the selection. Emits entered(story). Carries over Inkfall's
