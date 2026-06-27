@@ -56,12 +56,16 @@ func on_object_params(_p: Dictionary) -> void:
 	pass
 
 
+var _walk_tween: Tween
+
+
 ## position and scale the object in pixels from its normalized placement.
 func place() -> void:
 	z_index = depth
 	var s := board.unit * obj_scale
 	scale = Vector2(-s if flip else s, s)
-	position = Vector2(_current_x(), _current_y())
+	var start_nx: float = walk[0] if not walk.is_empty() else nx
+	position = Vector2(_x_for(start_nx), _current_y())
 	_refresh_visibility()
 
 
@@ -71,18 +75,9 @@ func _current_y() -> float:
 	return board.ground_y + ny_units * board.unit
 
 
-func _current_x() -> float:
-	return current_nx() * board.size.x + board.look * par
-
-
-## the live normalized x, walking between targets across lines when a walk path is set.
-func current_nx() -> float:
-	if walk.is_empty():
-		return nx
-	var i := mini(board.line_index, walk.size() - 1)
-	var prev: float = walk[i - 1] if i > 0 else walk[0]
-	var p := smoothstep(0.0, 1.0, board.beat() / walk_dur)
-	return lerpf(prev, walk[i], p)
+## pixel x for a normalized x, including the parallax offset.
+func _x_for(n: float) -> float:
+	return n * board.size.x + board.look * par
 
 
 func _refresh_visibility() -> void:
@@ -100,8 +95,6 @@ func visible_with(flags: Dictionary) -> bool:
 func _process(_delta: float) -> void:
 	if board == null:
 		return
-	if not walk.is_empty():
-		position.x = _current_x()
 	on_tick()
 
 
@@ -112,8 +105,16 @@ func on_tick() -> void:
 
 ## the board fans these out by signal as the story advances; subclasses override and call super.
 ## both refresh flag-driven visibility, so a body that appears on the blood flag shows on the fx.
-func on_line(_idx: int) -> void:
+## a cast member with a walk path tweens to its target x for the new line.
+func on_line(idx: int) -> void:
 	_refresh_visibility()
+	if walk.is_empty():
+		return
+	var i := mini(idx, walk.size() - 1)
+	if _walk_tween:
+		_walk_tween.kill()
+	_walk_tween = create_tween()
+	_walk_tween.tween_property(self, "position:x", _x_for(walk[i]), walk_dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func on_fx(_event: String) -> void:

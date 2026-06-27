@@ -1,6 +1,28 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/effects/Newspaper.gd" id="1"]
+
+[sub_resource type="Animation" id="anim_flutter"]
+resource_name = "flutter"
+length = 5.236
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Art:rotation")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1.309, 2.618, 3.927, 5.236),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.0, 0.04, 0.0, -0.04, 0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="anim_lib"]
+_data = {
+&"flutter": SubResource("anim_flutter")
+}
 
 [node name="Newspaper" type="Node2D"]
 script = ExtResource("1")
@@ -51,3 +73,9 @@ default_color = Color(0, 0, 0, 0.28)
 points = PackedVector2Array(-30, 17, 30, 17)
 width = 0.6
 default_color = Color(0, 0, 0, 0.28)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("anim_lib")
+}
+autoplay = "flutter"

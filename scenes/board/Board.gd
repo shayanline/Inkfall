@@ -21,7 +21,6 @@ var ground_y := 576.0
 var look := 0.0
 
 var line_index := 0
-var _line_start := 0.0
 
 var flags := {}
 
@@ -41,20 +40,11 @@ func _ready() -> void:
 		size = Vector2(1280, 720)
 	unit = minf(size.x, size.y) / BoardObject.DESIGN_HEIGHT
 	ground_y = act.ground * size.y
-	_line_start = _now()
 	GameState.line_changed.connect(_on_state_line)
 	GameState.fx_fired.connect(_on_state_fx)
 	_build_lighting()
 	_build_content()
 	_build_weather()
-
-
-func _now() -> float:
-	return Time.get_ticks_msec() / 1000.0
-
-
-func beat() -> float:
-	return maxf(0.0, _now() - _line_start)
 
 
 # --- build ---------------------------------------------------------------------------------
@@ -126,7 +116,6 @@ func _build_weather() -> void:
 
 func _on_state_line(idx: int) -> void:
 	line_index = idx
-	_line_start = _now()
 	line_changed.emit(idx)
 
 
