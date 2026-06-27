@@ -30,7 +30,7 @@ grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="Center"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 24
 alignment = 1
 
 [node name="Title" type="HBoxContainer" parent="Center/VBox"]
@@ -55,14 +55,14 @@ theme_type_variation = &"Subtitle"
 horizontal_alignment = 1
 
 [node name="Blurb" type="Label" parent="Center/VBox"]
-custom_minimum_size = Vector2(660, 0)
+custom_minimum_size = Vector2(990, 0)
 layout_mode = 2
 theme_type_variation = &"Blurb"
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="Spacer1" type="Control" parent="Center/VBox"]
-custom_minimum_size = Vector2(0, 22)
+custom_minimum_size = Vector2(0, 33)
 layout_mode = 2
 
 [node name="Heading" type="Label" parent="Center/VBox"]
@@ -73,11 +73,11 @@ horizontal_alignment = 1
 
 [node name="Tales" type="VBoxContainer" parent="Center/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 24
 alignment = 1
 
 [node name="Spacer2" type="Control" parent="Center/VBox"]
-custom_minimum_size = Vector2(0, 18)
+custom_minimum_size = Vector2(0, 27)
 layout_mode = 2
 
 [node name="Enter" type="Button" parent="Center/VBox"]

@@ -24,7 +24,8 @@ there is no per frame repaint. The flow is signal driven, and the UI look comes 
 ## Map
 
 ```
-project.godot          config, display (1280x720, landscape), input actions, autoloads
+project.godot          config, display (1920x1080 base, canvas_items + expand, landscape),
+                       input actions, autoloads
 stories/               the tales as resources
   hallucination.tres     "A Hallucination of Sin City" (a worked example of the story shape)
   danny_cole.tres        "The Last Deal of Danny Cole"
@@ -98,7 +99,7 @@ A placed object is a scene whose root script extends `BoardObject` (a Node2D), o
 object enters its first frame:
 
 - Art is authored in DESIGN UNITS: y = 0 is the object's base on the ground, up is negative y, x is
-  centred on 0. The board scales those units to pixels (about 2x at 1280x720), so a scene never
+  centred on 0. The board scales those units to pixels (about 3x at the 1920x1080 base), so a scene never
   premultiplies by a scale factor.
 - `BoardObject` handles placement (`nx`, `ny_units`, `par`, `obj_scale`, `flip`, `depth`, and the
   `anchor` for screen placed signs), the optional walk path (`walk` plus `walk_dur`), and reveal by
