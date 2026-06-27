@@ -14,8 +14,9 @@ const _BONE := Color(0.847, 0.831, 0.784, 1)
 const _WHITE := Color(1, 1, 1, 1)
 const _LINE := Color(0.863, 0.847, 0.784, 0.16)
 const _SCRIM := Color(0, 0, 0, 0.92)
-const _CELL := 40.0
+const _CELL := 44.0
 const _GAP := 6
+const _EDGE := 20.0
 
 var _tag: Label
 var _caption: PanelContainer
@@ -60,7 +61,7 @@ func _build_scene_tag() -> void:
 	_tag = Label.new()
 	_tag.theme_type_variation = &"SceneTag"
 	_tag.modulate.a = 0.0
-	_tag.position = Vector2(27, 24)
+	_tag.position = Vector2(_EDGE, _EDGE)
 	_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_tag)
 
@@ -113,21 +114,22 @@ func _build_topbar() -> void:
 	bar.anchor_left = 1.0
 	bar.anchor_right = 1.0
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	bar.offset_left = -200.0
-	bar.offset_right = -16.0
-	bar.offset_top = 16.0
+	bar.offset_left = -220.0
+	bar.offset_right = -_EDGE
+	bar.offset_top = _EDGE
 	bar.alignment = BoxContainer.ALIGNMENT_END
 	add_child(bar)
-	bar.add_child(_chip(HudIcon.Kind.POSTER, func(): poster_requested.emit()))
-	bar.add_child(_chip(HudIcon.Kind.FULLSCREEN, _toggle_fullscreen))
-	bar.add_child(_chip(HudIcon.Kind.MENU, _open_menu))
+	bar.add_child(_chip(HudIcon.Kind.POSTER, func(): poster_requested.emit(), "Save a poster of this frame"))
+	bar.add_child(_chip(HudIcon.Kind.FULLSCREEN, _toggle_fullscreen, "Fullscreen"))
+	bar.add_child(_chip(HudIcon.Kind.MENU, _open_menu, "Menu"))
 
 
-func _chip(kind: HudIcon.Kind, on_press: Callable) -> Button:
+func _chip(kind: HudIcon.Kind, on_press: Callable, tip: String) -> Button:
 	var b := Button.new()
 	b.theme_type_variation = &"HudButton"
 	b.custom_minimum_size = Vector2(_CELL, _CELL)
 	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = tip
 	b.pressed.connect(on_press)
 	var icon := HudIcon.new()
 	icon.kind = kind
@@ -142,7 +144,7 @@ func _build_actsel() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", _GAP)
 	col.mouse_filter = Control.MOUSE_FILTER_PASS
-	col.position = Vector2(16, 16)
+	col.position = Vector2(_EDGE, _EDGE)
 	col.add_theme_constant_override("alignment", 0)
 	add_child(col)
 
