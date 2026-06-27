@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/props/TrafficLight.gd" id="1"]
+
+[node name="TrafficLight" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Pole" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-2.5, -150, 2.5, -150, 2.5, 0, -2.5, 0)
+color = Color(0.098, 0.11, 0.133, 1)
+
+[node name="Housing" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-11, -202, 11, -202, 11, -148, -11, -148)
+color = Color(0.137, 0.153, 0.184, 1)
+
+[node name="RedHalo" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(16, -190, 11.314, -178.686, 0, -174, -11.314, -178.686, -16, -190, -11.314, -201.314, 0, -206, 11.314, -201.314)
+color = Color(1, 0.165, 0.165, 0.35)
+
+[node name="RedLamp" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(5, -190, 3.536, -186.464, 0, -185, -3.536, -186.464, -5, -190, -3.536, -193.536, 0, -195, 3.536, -193.536)
+color = Color(1, 0.165, 0.165, 1)
+
+[node name="AmberLamp" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(5, -175, 3.536, -171.464, 0, -170, -3.536, -171.464, -5, -175, -3.536, -178.536, 0, -180, 3.536, -178.536)
+color = Color(0.275, 0.275, 0.29, 0.5)
+
+[node name="GreenHalo" type="Polygon2D" parent="."]
+visible = false
+polygon = PackedVector2Array(16, -160, 11.314, -148.686, 0, -144, -11.314, -148.686, -16, -160, -11.314, -171.314, 0, -176, 11.314, -171.314)
+color = Color(0.212, 0.827, 0.431, 0.35)
+
+[node name="GreenLamp" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(5, -160, 3.536, -156.464, 0, -155, -3.536, -156.464, -5, -160, -3.536, -163.536, 0, -165, 3.536, -163.536)
+color = Color(0.275, 0.275, 0.29, 0.5)

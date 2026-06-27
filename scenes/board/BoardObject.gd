@@ -39,7 +39,9 @@ func _apply_params(p: Dictionary) -> void:
 		if k == "x":
 			nx = p[k]
 		elif k == "y":
-			ny_units = 0.0 if p[k] == null else float(p[k])
+			if p[k] != null:
+				anchor = "screen"
+				abs_y = float(p[k])
 		elif k == "scale":
 			obj_scale = 1.0 if p[k] == null else float(p[k])
 		elif k == "dy":

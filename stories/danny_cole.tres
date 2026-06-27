@@ -1,0 +1,786 @@
+[gd_resource type="Resource" script_class="Story" format=3]
+
+[ext_resource type="Script" path="res://src/resources/Act.gd" id="1_xy44b"]
+[ext_resource type="PackedScene" path="res://scenes/backdrops/Skyline.tscn" id="2_w0bw7"]
+[ext_resource type="Script" path="res://src/resources/Placement.gd" id="3_5puf8"]
+[ext_resource type="PackedScene" path="res://scenes/effects/Steam.tscn" id="4_xloul"]
+[ext_resource type="PackedScene" path="res://scenes/props/BarrelFire.tscn" id="5_8ddll"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Cat.tscn" id="6_8petj"]
+[ext_resource type="PackedScene" path="res://scenes/props/RedCar.tscn" id="7_xcyb6"]
+[ext_resource type="PackedScene" path="res://scenes/actors/WomanInRed.tscn" id="8_6lggm"]
+[ext_resource type="PackedScene" path="res://scenes/actors/TrenchMan.tscn" id="9_kbtra"]
+[ext_resource type="PackedScene" path="res://scenes/lights/Lamp.tscn" id="10_07sk4"]
+[ext_resource type="PackedScene" path="res://scenes/lights/Neon.tscn" id="11_7e4bj"]
+[ext_resource type="Script" path="res://src/resources/Line.gd" id="12_afdgo"]
+[ext_resource type="PackedScene" path="res://scenes/backdrops/Room.tscn" id="13_6ecc1"]
+[ext_resource type="PackedScene" path="res://scenes/props/RouletteWheel.tscn" id="14_hriuf"]
+[ext_resource type="PackedScene" path="res://scenes/props/SlotMachine.tscn" id="15_pgare"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Dealer.tscn" id="16_xqldq"]
+[ext_resource type="PackedScene" path="res://scenes/props/CardTable.tscn" id="17_upgv5"]
+[ext_resource type="PackedScene" path="res://scenes/props/Cash.tscn" id="18_dgksf"]
+[ext_resource type="PackedScene" path="res://scenes/props/Drink.tscn" id="19_rwg6w"]
+[ext_resource type="PackedScene" path="res://scenes/lights/Bulb.tscn" id="20_fa5uv"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Boss.tscn" id="21_kcblf"]
+[ext_resource type="PackedScene" path="res://scenes/backdrops/Alley.tscn" id="22_85233"]
+[ext_resource type="PackedScene" path="res://scenes/props/FireHydrant.tscn" id="23_1obtv"]
+[ext_resource type="PackedScene" path="res://scenes/effects/Newspaper.tscn" id="24_kjv8n"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Gunman.tscn" id="25_6k1bv"]
+[ext_resource type="PackedScene" path="res://scenes/props/Knife.tscn" id="26_s0umn"]
+[ext_resource type="PackedScene" path="res://scenes/effects/BodyOnGround.tscn" id="27_awmaj"]
+[ext_resource type="PackedScene" path="res://scenes/effects/BloodSplat.tscn" id="28_yta3w"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Thug.tscn" id="29_o1jog"]
+[ext_resource type="Script" path="res://src/resources/Story.gd" id="30_bkmfu"]
+
+[sub_resource type="Resource" id="Resource_fa1nb"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("2_w0bw7")
+params = {
+"layers": [{
+"depth": 0.25,
+"max_h": 0.62,
+"max_w": 130,
+"min_h": 0.34,
+"min_w": 60,
+"shade": "#0c0e13",
+"top": 0.18,
+"win": 0.1
+}, {
+"depth": 0.55,
+"max_h": 0.74,
+"max_w": 170,
+"min_h": 0.4,
+"min_w": 80,
+"shade": "#070809",
+"top": 0.28,
+"win": 0.16
+}, {
+"depth": 1.0,
+"max_h": 0.92,
+"max_w": 240,
+"min_h": 0.46,
+"min_w": 110,
+"shade": "#020203",
+"top": 0.4,
+"win": 0.22
+}],
+"seed": 19880420,
+"type": "skyline"
+}
+
+[sub_resource type="Resource" id="Resource_0yxw3"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("4_xloul")
+params = {
+"seed": 0.3,
+"type": "steam",
+"x": 0.52
+}
+
+[sub_resource type="Resource" id="Resource_oce2f"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("5_8ddll")
+params = {
+"par": 0.5,
+"scale": 0.85,
+"type": "barrelFire",
+"x": 0.07
+}
+
+[sub_resource type="Resource" id="Resource_g22rt"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("6_8petj")
+params = {
+"flip": true,
+"par": 0.5,
+"type": "cat",
+"x": 0.92
+}
+
+[sub_resource type="Resource" id="Resource_qdcig"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("7_xcyb6")
+params = {
+"par": 0.5,
+"scale": 0.7,
+"type": "redCar",
+"x": 0.86
+}
+
+[sub_resource type="Resource" id="Resource_0raug"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("8_6lggm")
+params = {
+"par": 0.4,
+"scale": 0.8,
+"type": "womanInRed",
+"x": 0.62
+}
+
+[sub_resource type="Resource" id="Resource_laome"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("9_kbtra")
+params = {
+"dy": 4,
+"par": 0.5,
+"scale": 1,
+"type": "trenchMan",
+"x": 0.34
+}
+
+[sub_resource type="Resource" id="Resource_odfdk"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("10_07sk4")
+params = {
+"flicker": true,
+"intensity": 1,
+"par": 0.5,
+"type": "lamp",
+"x": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_blike"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("11_7e4bj")
+params = {
+"color": Color(1, 0, 0.09411765, 1),
+"h": 34,
+"label": "CASINO",
+"seed": 1.3,
+"type": "neon",
+"w": 130,
+"x": 0.1,
+"y": 0.4
+}
+
+[sub_resource type="Resource" id="Resource_40nmp"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("11_7e4bj")
+params = {
+"color": Color(1, 0.83137256, 0, 1),
+"h": 118,
+"label": "LUCK",
+"seed": 4.1,
+"type": "neon",
+"w": 44,
+"x": 0.7,
+"y": 0.28
+}
+
+[sub_resource type="Resource" id="Resource_w6vk7"]
+script = ExtResource("12_afdgo")
+text = "Danny Cole had two suits, one good lung, and a dream the size of a debt."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_xmvga"]
+script = ExtResource("12_afdgo")
+text = "Get rich or get gone. In Basin City that's the same bus."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_gpbgm"]
+script = ExtResource("12_afdgo")
+text = "The neon promised him everything. Neon's a liar with a pretty mouth."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_cvfo1"]
+script = ExtResource("12_afdgo")
+text = "Tonight he'd play the deep tables, the ones <b>under</b> the city."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_dh3eh"]
+script = ExtResource("1_xy44b")
+title = "THE ITCH"
+key_light = Vector2(0.3, 0.5)
+ambience = "street"
+backdrop = SubResource("Resource_fa1nb")
+lights = Array[ExtResource("3_5puf8")]([SubResource("Resource_odfdk"), SubResource("Resource_blike"), SubResource("Resource_40nmp")])
+cast = Array[ExtResource("3_5puf8")]([SubResource("Resource_0yxw3"), SubResource("Resource_oce2f"), SubResource("Resource_g22rt"), SubResource("Resource_qdcig"), SubResource("Resource_0raug"), SubResource("Resource_laome")])
+lines = Array[ExtResource("12_afdgo")]([SubResource("Resource_w6vk7"), SubResource("Resource_xmvga"), SubResource("Resource_gpbgm"), SubResource("Resource_cvfo1")])
+
+[sub_resource type="Resource" id="Resource_ls6dj"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("13_6ecc1")
+params = {
+"door": 0.64,
+"type": "room",
+"wall": "#06070b",
+"wall_top": "#0b0d12"
+}
+
+[sub_resource type="Resource" id="Resource_go7jl"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("14_hriuf")
+params = {
+"par": 0.2,
+"scale": 0.8,
+"type": "rouletteWheel",
+"x": 0.2,
+"y": 0.74
+}
+
+[sub_resource type="Resource" id="Resource_jwbgb"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("15_pgare")
+params = {
+"par": 0.2,
+"scale": 0.85,
+"type": "slotMachine",
+"x": 0.07
+}
+
+[sub_resource type="Resource" id="Resource_nht04"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("15_pgare")
+params = {
+"par": 0.2,
+"scale": 0.85,
+"type": "slotMachine",
+"x": 0.93
+}
+
+[sub_resource type="Resource" id="Resource_e0bep"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("16_xqldq")
+params = {
+"scale": 0.95,
+"type": "dealer",
+"x": 0.45
+}
+
+[sub_resource type="Resource" id="Resource_n1o5l"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("17_upgv5")
+params = {
+"scale": 1.05,
+"type": "cardTable",
+"x": 0.45
+}
+
+[sub_resource type="Resource" id="Resource_2he5i"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("18_dgksf")
+params = {
+"scale": 0.85,
+"type": "cash",
+"x": 0.52,
+"y": 0.79
+}
+
+[sub_resource type="Resource" id="Resource_twe2v"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("19_rwg6w")
+params = {
+"kind": "whiskey",
+"scale": 0.9,
+"type": "drink",
+"x": 0.63,
+"y": 0.8
+}
+
+[sub_resource type="Resource" id="Resource_ll1hc"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("9_kbtra")
+params = {
+"par": 0.2,
+"scale": 1,
+"type": "trenchMan",
+"x": 0.76
+}
+
+[sub_resource type="Resource" id="Resource_m3c4n"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("20_fa5uv")
+params = {
+"flicker": true,
+"intensity": 1,
+"par": 0.2,
+"type": "bulb",
+"x": 0.45,
+"y": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_1vcsn"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("11_7e4bj")
+params = {
+"color": Color(1, 0, 0.09411765, 1),
+"h": 30,
+"label": "FORTUNE",
+"par": 0.2,
+"seed": 2.2,
+"type": "neon",
+"w": 120,
+"x": 0.14,
+"y": 0.2
+}
+
+[sub_resource type="Resource" id="Resource_nwepr"]
+script = ExtResource("12_afdgo")
+text = "Down past the meat locker, the air goes blue with smoke and worse."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_sb65d"]
+script = ExtResource("12_afdgo")
+text = "Green felt. <b>Red</b> chips. A dealer who smiles like a closing door."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_4sbyy"]
+script = ExtResource("12_afdgo")
+text = "He bets the rent. Then the car. Then his father's watch."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_88ett"]
+script = ExtResource("12_afdgo")
+text = "The cards turn cold. The house just breathes in, slow."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_b45nh"]
+script = ExtResource("1_xy44b")
+title = "THE TABLE"
+ground = 0.82
+key_light = Vector2(0.5, 0.3)
+indoor = true
+backdrop = SubResource("Resource_ls6dj")
+lights = Array[ExtResource("3_5puf8")]([SubResource("Resource_m3c4n"), SubResource("Resource_1vcsn")])
+cast = Array[ExtResource("3_5puf8")]([SubResource("Resource_go7jl"), SubResource("Resource_jwbgb"), SubResource("Resource_nht04"), SubResource("Resource_e0bep"), SubResource("Resource_n1o5l"), SubResource("Resource_2he5i"), SubResource("Resource_twe2v"), SubResource("Resource_ll1hc")])
+lines = Array[ExtResource("12_afdgo")]([SubResource("Resource_nwepr"), SubResource("Resource_sb65d"), SubResource("Resource_4sbyy"), SubResource("Resource_88ett")])
+
+[sub_resource type="Resource" id="Resource_5a47x"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("13_6ecc1")
+params = {
+"door": 0.62,
+"type": "room",
+"wall": "#05060a",
+"wall_top": "#090b10"
+}
+
+[sub_resource type="Resource" id="Resource_jcqcl"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("15_pgare")
+params = {
+"par": 0.2,
+"scale": 0.85,
+"type": "slotMachine",
+"x": 0.08
+}
+
+[sub_resource type="Resource" id="Resource_go4ip"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("16_xqldq")
+params = {
+"scale": 0.95,
+"type": "dealer",
+"x": 0.45
+}
+
+[sub_resource type="Resource" id="Resource_r567k"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("17_upgv5")
+params = {
+"glow": false,
+"scale": 1.05,
+"type": "cardTable",
+"x": 0.45
+}
+
+[sub_resource type="Resource" id="Resource_kr0bm"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("9_kbtra")
+params = {
+"par": 0.2,
+"scale": 0.97,
+"type": "trenchMan",
+"x": 0.74
+}
+
+[sub_resource type="Resource" id="Resource_5o57v"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("21_kcblf")
+params = {
+"par": 0.2,
+"scale": 0.95,
+"type": "boss",
+"x": 0.92
+}
+
+[sub_resource type="Resource" id="Resource_3ncna"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("20_fa5uv")
+params = {
+"flicker": true,
+"intensity": 0.8,
+"par": 0.2,
+"type": "bulb",
+"x": 0.45,
+"y": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_g3fhk"]
+script = ExtResource("12_afdgo")
+text = "Cleaned out. Pockets full of lint and a marker he can't cover."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_din5r"]
+script = ExtResource("12_afdgo")
+text = "The boss gives him till dawn. The boss is being <b>generous</b>."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_5huxi"]
+script = ExtResource("12_afdgo")
+text = "No system beats a debt with your name carved in it."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_id4q8"]
+script = ExtResource("12_afdgo")
+text = "Danny walks out owing more than he's worth. Which isn't much."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_j8mxw"]
+script = ExtResource("1_xy44b")
+title = "THE LOSS"
+ground = 0.82
+key_light = Vector2(0.5, 0.3)
+indoor = true
+backdrop = SubResource("Resource_5a47x")
+lights = Array[ExtResource("3_5puf8")]([SubResource("Resource_3ncna")])
+cast = Array[ExtResource("3_5puf8")]([SubResource("Resource_jcqcl"), SubResource("Resource_go4ip"), SubResource("Resource_r567k"), SubResource("Resource_kr0bm"), SubResource("Resource_5o57v")])
+lines = Array[ExtResource("12_afdgo")]([SubResource("Resource_g3fhk"), SubResource("Resource_din5r"), SubResource("Resource_5huxi"), SubResource("Resource_id4q8")])
+
+[sub_resource type="Resource" id="Resource_ihcqt"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("22_85233")
+params = {
+"seed": 44021,
+"type": "alley"
+}
+
+[sub_resource type="Resource" id="Resource_saxkx"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("4_xloul")
+params = {
+"seed": 0.9,
+"type": "steam",
+"x": 0.4
+}
+
+[sub_resource type="Resource" id="Resource_tohus"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("5_8ddll")
+params = {
+"par": 0.5,
+"scale": 0.85,
+"type": "barrelFire",
+"x": 0.88
+}
+
+[sub_resource type="Resource" id="Resource_c2o1n"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("23_1obtv")
+params = {
+"par": 0.5,
+"type": "fireHydrant",
+"x": 0.06
+}
+
+[sub_resource type="Resource" id="Resource_qr28t"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("6_8petj")
+params = {
+"par": 0.5,
+"type": "cat",
+"x": 0.14
+}
+
+[sub_resource type="Resource" id="Resource_sd4t5"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("24_kjv8n")
+params = {
+"seed": 2.1,
+"type": "newspaper",
+"x": 0
+}
+
+[sub_resource type="Resource" id="Resource_hxfoh"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("25_6k1bv")
+params = {
+"hide_on_flag": "blood",
+"par": 0.5,
+"scale": 1,
+"type": "gunman",
+"x": 0.34
+}
+
+[sub_resource type="Resource" id="Resource_wi2f2"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("26_s0umn")
+params = {
+"angle": 0.2,
+"bloody": true,
+"on_flag": "blood",
+"type": "knife",
+"x": 0.4,
+"y": 0.84
+}
+
+[sub_resource type="Resource" id="Resource_vda2j"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("27_awmaj")
+params = {
+"on_flag": "blood",
+"par": 0.5,
+"scale": 1,
+"type": "bodyOnGround",
+"x": 0.34
+}
+
+[sub_resource type="Resource" id="Resource_ujt2x"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("28_yta3w")
+params = {
+"on_flag": "blood",
+"seed": 7,
+"type": "bloodSplat",
+"x": 0.4
+}
+
+[sub_resource type="Resource" id="Resource_r5fl0"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("9_kbtra")
+params = {
+"par": 0.5,
+"scale": 1,
+"type": "trenchMan",
+"x": 0.72
+}
+
+[sub_resource type="Resource" id="Resource_as8u8"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("20_fa5uv")
+params = {
+"flicker": true,
+"intensity": 1,
+"par": 0.3,
+"type": "bulb",
+"x": 0.5,
+"y": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_3simf"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("11_7e4bj")
+params = {
+"color": Color(1, 0, 0.09411765, 1),
+"h": 22,
+"label": "EAT",
+"par": 0.3,
+"seed": 3.3,
+"type": "neon",
+"w": 52,
+"x": 0.47,
+"y": 0.42
+}
+
+[sub_resource type="Resource" id="Resource_ugdm7"]
+script = ExtResource("12_afdgo")
+text = "A collector trails him into the alley. Knuckles, bad teeth, worse intentions."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_e7ad1"]
+script = ExtResource("12_afdgo")
+text = "They go for the same gun. It only answers to one of them."
+fx = PackedStringArray("muzzle", "blood", "lightning")
+
+[sub_resource type="Resource" id="Resource_grh32"]
+script = ExtResource("12_afdgo")
+text = "The collector folds like a cheap hand. Danny didn't mean it. Doesn't matter."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_7yt03"]
+script = ExtResource("12_afdgo")
+text = "He's not a gambler anymore. He's a <b>killer</b> with nowhere left to run."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_k8ncm"]
+script = ExtResource("1_xy44b")
+title = "THE ACCIDENT"
+key_light = Vector2(0.5, 0.3)
+backdrop = SubResource("Resource_ihcqt")
+lights = Array[ExtResource("3_5puf8")]([SubResource("Resource_as8u8"), SubResource("Resource_3simf")])
+cast = Array[ExtResource("3_5puf8")]([SubResource("Resource_saxkx"), SubResource("Resource_tohus"), SubResource("Resource_c2o1n"), SubResource("Resource_qr28t"), SubResource("Resource_sd4t5"), SubResource("Resource_hxfoh"), SubResource("Resource_wi2f2"), SubResource("Resource_vda2j"), SubResource("Resource_ujt2x"), SubResource("Resource_r5fl0")])
+lines = Array[ExtResource("12_afdgo")]([SubResource("Resource_ugdm7"), SubResource("Resource_e7ad1"), SubResource("Resource_grh32"), SubResource("Resource_7yt03")])
+
+[sub_resource type="Resource" id="Resource_4ktdc"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("2_w0bw7")
+params = {
+"layers": [{
+"depth": 0.3,
+"max_h": 0.66,
+"max_w": 140,
+"min_h": 0.34,
+"min_w": 60,
+"shade": "#0c0e13",
+"top": 0.2,
+"win": 0.1
+}, {
+"depth": 0.6,
+"max_h": 0.78,
+"max_w": 180,
+"min_h": 0.4,
+"min_w": 90,
+"shade": "#070809",
+"top": 0.3,
+"win": 0.14
+}, {
+"depth": 1.0,
+"max_h": 0.94,
+"max_w": 250,
+"min_h": 0.46,
+"min_w": 120,
+"shade": "#020203",
+"top": 0.42,
+"win": 0.18
+}],
+"seed": 90218,
+"type": "skyline"
+}
+
+[sub_resource type="Resource" id="Resource_qg5fq"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("4_xloul")
+params = {
+"seed": 1.1,
+"type": "steam",
+"x": 0.55
+}
+
+[sub_resource type="Resource" id="Resource_xd8wt"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("25_6k1bv")
+params = {
+"par": 0.5,
+"scale": 1,
+"type": "gunman",
+"x": 0.66
+}
+
+[sub_resource type="Resource" id="Resource_eobw8"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("29_o1jog")
+params = {
+"par": 0.5,
+"scale": 1,
+"type": "thug",
+"x": 0.84
+}
+
+[sub_resource type="Resource" id="Resource_nbjyb"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("21_kcblf")
+params = {
+"par": 0.5,
+"scale": 0.92,
+"type": "boss",
+"x": 0.97
+}
+
+[sub_resource type="Resource" id="Resource_t1isd"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("9_kbtra")
+params = {
+"hide_on_flag": "blood",
+"par": 0.5,
+"scale": 1,
+"type": "trenchMan",
+"x": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_at1id"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("27_awmaj")
+params = {
+"flip": true,
+"on_flag": "blood",
+"par": 0.5,
+"scale": 1,
+"type": "bodyOnGround",
+"x": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_wsa2l"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("28_yta3w")
+params = {
+"on_flag": "blood",
+"seed": 13,
+"type": "bloodSplat",
+"x": 0.34
+}
+
+[sub_resource type="Resource" id="Resource_uxjcx"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("10_07sk4")
+params = {
+"flicker": true,
+"intensity": 1,
+"par": 0.5,
+"type": "lamp",
+"x": 0.5
+}
+
+[sub_resource type="Resource" id="Resource_hkjga"]
+script = ExtResource("3_5puf8")
+scene = ExtResource("11_7e4bj")
+params = {
+"color": Color(1, 0, 0.09411765, 1),
+"h": 30,
+"label": "DEAD END",
+"seed": 5.5,
+"type": "neon",
+"w": 90,
+"x": 0.78,
+"y": 0.3
+}
+
+[sub_resource type="Resource" id="Resource_1fvdh"]
+script = ExtResource("12_afdgo")
+text = "Word travels fast when a made man stops breathing."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_5qska"]
+script = ExtResource("12_afdgo")
+text = "They find him where the rain pools deepest. Three coats, three guns."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_gl42u"]
+script = ExtResource("12_afdgo")
+text = "He opens his mouth to deal one last time."
+fx = PackedStringArray("muzzle")
+
+[sub_resource type="Resource" id="Resource_bfgkj"]
+script = ExtResource("12_afdgo")
+text = "The guns answer first. The gutter drinks him down."
+fx = PackedStringArray("muzzle", "blood", "lightning")
+
+[sub_resource type="Resource" id="Resource_y1duh"]
+script = ExtResource("12_afdgo")
+text = "Basin City balances its books by morning. Danny Cole doesn't even leave a stain."
+fx = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_yfe1l"]
+script = ExtResource("1_xy44b")
+title = "THE RECKONING"
+key_light = Vector2(0.7, 0.4)
+backdrop = SubResource("Resource_4ktdc")
+lights = Array[ExtResource("3_5puf8")]([SubResource("Resource_uxjcx"), SubResource("Resource_hkjga")])
+cast = Array[ExtResource("3_5puf8")]([SubResource("Resource_qg5fq"), SubResource("Resource_xd8wt"), SubResource("Resource_eobw8"), SubResource("Resource_nbjyb"), SubResource("Resource_t1isd"), SubResource("Resource_at1id"), SubResource("Resource_wsa2l")])
+lines = Array[ExtResource("12_afdgo")]([SubResource("Resource_1fvdh"), SubResource("Resource_5qska"), SubResource("Resource_gl42u"), SubResource("Resource_bfgkj"), SubResource("Resource_y1duh")])
+
+[resource]
+script = ExtResource("30_bkmfu")
+title = "INKFALL"
+subtitle = "THE LAST DEAL OF DANNY COLE"
+blurb = "A small man with a big debt goes looking for easy money in the underground casinos of Basin City. The house always wins. Tap through his last bad night."
+music = "sad_jazz"
+acts = Array[ExtResource("1_xy44b")]([SubResource("Resource_dh3eh"), SubResource("Resource_b45nh"), SubResource("Resource_j8mxw"), SubResource("Resource_k8ncm"), SubResource("Resource_yfe1l")])
