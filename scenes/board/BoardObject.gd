@@ -57,6 +57,7 @@ func on_object_params(_p: Dictionary) -> void:
 
 
 var _walk_tween: Tween
+var _walk_i := -1
 
 
 ## position and scale the object in pixels from its normalized placement.
@@ -111,10 +112,18 @@ func on_line(idx: int) -> void:
 	if walk.is_empty():
 		return
 	var i := mini(idx, walk.size() - 1)
+	var prev := _walk_i
+	_walk_i = i
+	# the first placement, or a line with the same target, is not a walk, so no steps and no tween
+	if prev < 0 or is_equal_approx(walk[i], walk[prev]):
+		return
 	if _walk_tween:
 		_walk_tween.kill()
+	# hold the footstep loop full while the walk plays, then let it fade as the walk arrives
+	AudioDirector.set_loop("footstep", true)
 	_walk_tween = create_tween()
 	_walk_tween.tween_property(self, "position:x", _x_for(walk[i]), walk_dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_walk_tween.tween_callback(func(): AudioDirector.set_loop("footstep", false))
 
 
 func on_fx(_event: String) -> void:

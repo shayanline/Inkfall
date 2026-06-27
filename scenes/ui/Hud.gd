@@ -17,10 +17,19 @@ const _SCRIM := Color(0, 0, 0, 0.92)
 const _CELL := 44.0
 const _GAP := 6
 const _EDGE := 20.0
+const _CAP_VP := Vector2i(1200, 240)   # the caption render target, the panel hugs its text inside it
+const _CAP_IN := 1.15                  # narration torn reveal in (s)
+const _CAP_OUT := 0.46                 # narration torn wipe out (s)
+const _CAP_VARIANTS := 3
 
 var _tag: Label
 var _caption: PanelContainer
 var _caption_label: RichTextLabel
+var _cap_vp: SubViewport
+var _cap_tex: TextureRect
+var _cap_mat: ShaderMaterial
+var _cap_shown := false
+var _cap_tween: Tween
 var _tap: Label
 
 var _review_btn: Button
@@ -68,18 +77,25 @@ func _build_scene_tag() -> void:
 
 
 func _build_caption() -> void:
+	# the caption (paper panel plus text) renders into a SubViewport, so the torn reveal shader can
+	# mask the whole thing as one image. The panel hugs its text, anchored near the viewport's bottom.
+	_cap_vp = SubViewport.new()
+	_cap_vp.size = _CAP_VP
+	_cap_vp.transparent_bg = true
+	_cap_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_cap_vp.gui_disable_input = true
+	add_child(_cap_vp)
+
 	_caption = PanelContainer.new()
 	_caption.theme_type_variation = &"CaptionPanel"
-	_caption.modulate.a = 0.0
-	_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_caption.anchor_left = 0.5
 	_caption.anchor_right = 0.5
 	_caption.anchor_top = 1.0
 	_caption.anchor_bottom = 1.0
 	_caption.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_caption.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_caption.offset_bottom = -54.0
-	add_child(_caption)
+	_caption.offset_bottom = -16.0
+	_cap_vp.add_child(_caption)
 	_caption_label = RichTextLabel.new()
 	_caption_label.bbcode_enabled = true
 	_caption_label.fit_content = true
@@ -88,6 +104,23 @@ func _build_caption() -> void:
 	_caption_label.custom_minimum_size = Vector2(560, 0)
 	_caption_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_caption.add_child(_caption_label)
+
+	_cap_mat = ShaderMaterial.new()
+	_cap_mat.shader = load("res://shaders/caption_clip.gdshader")
+	_cap_mat.set_shader_parameter("reveal", 0.0)
+	_cap_tex = TextureRect.new()
+	_cap_tex.texture = _cap_vp.get_texture()
+	_cap_tex.material = _cap_mat
+	_cap_tex.custom_minimum_size = Vector2(_CAP_VP)
+	_cap_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cap_tex.anchor_left = 0.5
+	_cap_tex.anchor_right = 0.5
+	_cap_tex.anchor_top = 1.0
+	_cap_tex.anchor_bottom = 1.0
+	_cap_tex.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_cap_tex.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_cap_tex.offset_bottom = -48.0
+	add_child(_cap_tex)
 
 
 func _build_tap() -> void:
@@ -415,16 +448,40 @@ func set_scene_tag(title: String) -> void:
 	tw.tween_property(_tag, "modulate:a", 0.0, 0.5)
 
 
+## reveal a narration line with the torn paper-cut sweep. The direction and torn edge are
+## deterministic from the act and line, so a replay always draws the same cut.
 func show_caption(text: String) -> void:
 	var bb := text.replace("<b>", "[color=#c20012][b]").replace("</b>", "[/b][/color]")
-	var tw := create_tween()
-	tw.tween_property(_caption, "modulate:a", 0.0, 0.17)
-	tw.tween_callback(func(): _caption_label.text = bb)
-	tw.tween_property(_caption, "modulate:a", 1.0, 0.2)
+	var variant := (GameState.act_index * 31 + GameState.line_index) % _CAP_VARIANTS
+	var seed := float(GameState.act_index * 1009 + GameState.line_index + 1)
+	if _cap_tween:
+		_cap_tween.kill()
+	_cap_tween = create_tween()
+	if _cap_shown:
+		# wipe the current line out (with its own torn edge), then cut the new line in
+		_cap_tween.tween_method(_set_cap_reveal, 1.0, 0.0, _CAP_OUT).set_ease(Tween.EASE_IN)
+		_cap_tween.tween_callback(func(): _apply_caption(bb, variant, seed))
+	else:
+		_apply_caption(bb, variant, seed)
+	_cap_tween.tween_method(_set_cap_reveal, 0.0, 1.0, _CAP_IN).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_cap_shown = true
+
+
+func _apply_caption(bb: String, variant: int, seed: float) -> void:
+	_caption_label.text = bb
+	_cap_mat.set_shader_parameter("variant", variant)
+	_cap_mat.set_shader_parameter("seed", seed)
+
+
+func _set_cap_reveal(v: float) -> void:
+	_cap_mat.set_shader_parameter("reveal", v)
 
 
 func hide_caption() -> void:
-	_caption.modulate.a = 0.0
+	if _cap_tween:
+		_cap_tween.kill()
+	_set_cap_reveal(0.0)
+	_cap_shown = false
 
 
 func set_tap_visible(v: bool) -> void:
