@@ -33,6 +33,7 @@ var _menu_views := {}
 var _sound_btn: Button
 var _poster: Control
 var _poster_img: TextureRect
+var _poster_cap: Label
 var _poster_save: Button
 
 var _titles: Array = []
@@ -41,7 +42,6 @@ var _unlocked := false
 var _playing := false
 var _ended := false
 var _poster_image: Image
-var _fullscreen := false
 
 
 func _ready() -> void:
@@ -310,7 +310,7 @@ func _sep() -> Control:
 	wrap.add_theme_constant_override("margin_bottom", 10)
 	var line := ColorRect.new()
 	line.color = _LINE
-	line.custom_minimum_size = Vector2(0, 1)
+	line.custom_minimum_size = Vector2(0, 2)
 	wrap.add_child(line)
 	return wrap
 
@@ -320,28 +320,59 @@ func _build_poster() -> void:
 	_poster.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_poster.visible = false
 	add_child(_poster)
+	# same chrome as the pause menu: a dimmed scrim behind one double ruled framed card
 	var scrim := ColorRect.new()
 	scrim.color = _SCRIM
 	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	scrim.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+			_close_poster())
 	_poster.add_child(scrim)
+
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_poster.add_child(center)
+	var frame := PanelContainer.new()
+	frame.theme_type_variation = &"MenuFrame"
+	center.add_child(frame)
+	var pad := MarginContainer.new()
+	for s in ["left", "top", "right", "bottom"]:
+		pad.add_theme_constant_override("margin_" + s, 5)
+	frame.add_child(pad)
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = &"MenuPanel"
+	pad.add_child(panel)
+
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 18)
-	center.add_child(col)
+	col.add_theme_constant_override("separation", 16)
+	panel.add_child(col)
+	col.add_child(_menu_title("POSTER"))
+
+	# the pulled frame, matted in a crisp bordered frame
+	var mat := PanelContainer.new()
+	mat.theme_type_variation = &"PosterFrame"
+	mat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(mat)
 	_poster_img = TextureRect.new()
 	_poster_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_poster_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	col.add_child(_poster_img)
+	mat.add_child(_poster_img)
+
+	_poster_cap = Label.new()
+	_poster_cap.theme_type_variation = &"MenuNote"
+	_poster_cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_poster_cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(_poster_cap)
+
+	col.add_child(_sep())
+
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 28)
+	row.add_theme_constant_override("separation", 24)
 	col.add_child(row)
-	_poster_save = _menu_item("SAVE", &"MenuItem", _save_poster)
+	_poster_save = _menu_item("SAVE", &"MenuItemPrimary", _save_poster)
 	row.add_child(_poster_save)
 	row.add_child(_menu_item("BACK TO THE RAIN", &"MenuItem", _close_poster))
 
@@ -406,16 +437,26 @@ func resume_from_end() -> void:
 	set_tap_visible(true)
 
 
+## tex is the clean pulled frame shown in the modal, image is the composed poster written on SAVE.
 func show_poster(tex: Texture2D, image: Image) -> void:
 	_poster_image = image
 	_poster_img.texture = tex
 	var ts := tex.get_size()
-	var h := 720.0
+	var h := 420.0
 	_poster_img.custom_minimum_size = Vector2(h * ts.x / maxf(ts.y, 1.0), h)
+	_poster_cap.text = _poster_caption()
 	_poster_save.text = "SAVE"
 	_poster_save.disabled = false
 	_poster.visible = true
 	pause_changed.emit(true)
+
+
+func _poster_caption() -> String:
+	var line := GameState.current_line()
+	var s := line.text if line else ""
+	if s == "" and GameState.story:
+		s = GameState.story.subtitle
+	return s.replace("<b>", "").replace("</b>", "")
 
 
 # --- act picker ----------------------------------------------------------
@@ -504,9 +545,13 @@ func _do_exit() -> void:
 # --- fullscreen ----------------------------------------------------------
 
 func _toggle_fullscreen() -> void:
-	_fullscreen = not _fullscreen
+	# read the real window mode each time so the toggle never desyncs (the window may start
+	# fullscreen, or the viewer may leave fullscreen with Esc or the OS controls)
+	var mode := DisplayServer.window_get_mode()
+	var is_fs := mode == DisplayServer.WINDOW_MODE_FULLSCREEN \
+		or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
 	DisplayServer.window_set_mode(
-		DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+		DisplayServer.WINDOW_MODE_WINDOWED if is_fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 
 # --- poster --------------------------------------------------------------

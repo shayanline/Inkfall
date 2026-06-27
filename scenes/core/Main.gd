@@ -192,21 +192,23 @@ func _on_poster_requested() -> void:
 	await RenderingServer.frame_post_draw
 	var frame := get_viewport().get_texture().get_image()
 	_hud.visible = true
-	var poster := await _compose_poster(frame)
-	_hud.show_poster(poster[0], poster[1])
+	# the modal shows the clean pulled frame, SAVE writes the composed poster
+	var frame_tex := ImageTexture.create_from_image(frame)
+	var save_img := await _compose_poster(frame)
+	_hud.show_poster(frame_tex, save_img)
 
 
 ## compose a downloadable noir poster from the captured frame: an inked white border, the NOIR
 ## wordmark, the current caption as the tagline, and a footer. Built in a SubViewport so it uses the
 ## shared fonts and renders to a saveable image.
-func _compose_poster(frame: Image) -> Array:
+func _compose_poster(frame: Image) -> Image:
 	var pw := 900
 	var margin := 56
 	var fw := pw - margin * 2
 	var vp := get_viewport_rect().size
 	var fh := int(fw * vp.y / vp.x)
-	var fy := 150
-	var ph := fy + fh + 170
+	var fy := 190
+	var ph := fy + fh + 160
 
 	var sv := SubViewport.new()
 	sv.size = Vector2i(pw, ph)
@@ -224,7 +226,7 @@ func _compose_poster(frame: Image) -> Array:
 
 	var title := HBoxContainer.new()
 	title.anchor_right = 1.0
-	title.offset_top = 64.0
+	title.offset_top = 56.0
 	title.alignment = BoxContainer.ALIGNMENT_CENTER
 	title.add_theme_constant_override("separation", 0)
 	root.add_child(title)
@@ -253,7 +255,7 @@ func _compose_poster(frame: Image) -> Array:
 	tag.theme_type_variation = &"MenuRole"
 	tag.add_theme_font_size_override("font_size", 24)
 	tag.add_theme_color_override("font_color", Color(0.847, 0.831, 0.784, 1))
-	tag.position = Vector2(margin, fy + fh + 26)
+	tag.position = Vector2(margin, fy + fh + 30)
 	tag.size = Vector2(fw, 0)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tag.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -263,7 +265,7 @@ func _compose_poster(frame: Image) -> Array:
 	var foot := Label.new()
 	foot.theme_type_variation = &"TapNote"
 	foot.add_theme_font_size_override("font_size", 13)
-	foot.position = Vector2(0, ph - 46)
+	foot.position = Vector2(0, ph - 44)
 	foot.size = Vector2(pw, 0)
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	foot.text = "BASIN CITY  ·  NOIR"
@@ -271,9 +273,8 @@ func _compose_poster(frame: Image) -> Array:
 
 	await RenderingServer.frame_post_draw
 	var img := sv.get_texture().get_image()
-	var tex := ImageTexture.create_from_image(img)
 	sv.queue_free()
-	return [tex, img]
+	return img
 
 
 func _poster_word(text: String, col: Color) -> Label:

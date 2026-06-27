@@ -28,15 +28,17 @@ func _draw() -> void:
 		Kind.MENU:
 			var w := 16.0
 			for dy in [-5.0, 0.0, 5.0]:
-				draw_line(Vector2(c.x - w * 0.5, c.y + dy), Vector2(c.x + w * 0.5, c.y + dy), tint, _W)
+				draw_line(Vector2(c.x - w * 0.5, c.y + dy), Vector2(c.x + w * 0.5, c.y + dy), tint, _W, true)
 		Kind.FULLSCREEN:
 			var h := 8.0
 			var ext := 9.0
 			# top-left and bottom-right corner brackets
-			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext + h, c.y - ext), tint, _W)
-			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext, c.y - ext + h), tint, _W)
-			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext - h, c.y + ext), tint, _W)
-			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext, c.y + ext - h), tint, _W)
+			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext + h, c.y - ext), tint, _W, true)
+			draw_line(Vector2(c.x - ext, c.y - ext), Vector2(c.x - ext, c.y - ext + h), tint, _W, true)
+			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext - h, c.y + ext), tint, _W, true)
+			draw_line(Vector2(c.x + ext, c.y + ext), Vector2(c.x + ext, c.y + ext - h), tint, _W, true)
 		Kind.POSTER:
 			var r := Rect2(c.x - 8.5, c.y - 7.0, 17.0, 14.0)
-			draw_rect(r, tint, false, _W)
+			draw_polyline(PackedVector2Array([
+				r.position, Vector2(r.end.x, r.position.y), r.end,
+				Vector2(r.position.x, r.end.y), r.position]), tint, _W, true)

@@ -62,5 +62,6 @@ lightning={
 
 [rendering]
 
+anti_aliasing/quality/msaa_2d=2
 viewport/hdr_2d=true
 environment/defaults/default_clear_color=Color(0.0196078, 0.0196078, 0.0196078, 1)
