@@ -99,7 +99,9 @@ func _enter_act(index: int, first: bool) -> void:
 	_swap_board(act)
 	if first:
 		# the screen is already black from the story-title card, so show the first act card here too.
-		# the score and the swoosh come in with the act title, not the story title.
+		# a short beat of darkness between the story title fading out and the act title appearing,
+		# so the two cards do not run into each other.
+		await get_tree().create_timer(0.5).timeout
 		var story := GameState.story
 		if story.music != "":
 			AudioDirector.play_music(story.music, story.music_vol)
