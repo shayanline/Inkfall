@@ -54,7 +54,7 @@ func _draw() -> void:
 	# Camera circle at the bottom of the phone (before rotation: below centre).
 	var cam_local := Vector2(0.0, PHONE_H * 0.5 - CAM_CY)
 	var cam_world := xf * cam_local
-	_draw_circle_outline(cam_world, CAM_R, angle, FG, 2.0)
+	_draw_circle_outline(cam_world, CAM_R, FG, 2.0)
 
 
 func _rotation_angle(t: float) -> float:
@@ -99,7 +99,7 @@ func _arc_points(pts: PackedVector2Array, center: Vector2, radius: float, start:
 
 
 ## Draw a circle outline as a polyline (avoids draw_arc which can vanish on web).
-func _draw_circle_outline(center: Vector2, radius: float, angle: float, color: Color, width: float) -> void:
+func _draw_circle_outline(center: Vector2, radius: float, color: Color, width: float) -> void:
 	var pts: PackedVector2Array = []
 	var segs := 24
 	for i in range(segs + 1):

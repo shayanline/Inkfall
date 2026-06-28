@@ -19,12 +19,9 @@ extends Control
 ## Fires exactly once per story, never again on later orientation changes.
 signal started
 
-const SKIP_DELAY := 4.0  ## seconds before STAY IN PORTRAIT appears on no fullscreen devices
+const SKIP_DELAY := 3.0  ## seconds before STAY IN PORTRAIT appears on no fullscreen devices
 const SETTLE_MS := 220   ## debounce: wait this long after the last resize before judging
 
-@onready var _bg: ColorRect = $BG
-@onready var _center: CenterContainer = $Center
-@onready var _phone: Control = $Center/VBox/PhoneIcon
 @onready var _msg_fs: Label = $Center/VBox/MessageFS
 @onready var _msg_nofs: Label = $Center/VBox/MessageNoFS
 @onready var _btn_rotate: Button = $Center/VBox/BtnRotate
