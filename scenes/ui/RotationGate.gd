@@ -1,16 +1,26 @@
 class_name RotationGate
 extends Control
-## The landscape prompt. On a touch device held in portrait, starting a story raises a full screen
-## gate that offers ROTATE TO LANDSCAPE (fullscreen plus orientation lock where possible) or STAY IN
-## PORTRAIT (plays letterboxed). Turning the phone by hand while the prompt is up clears it at once.
-## On desktop or when already landscape the gate never appears. After the gate has been passed once,
-## returning to portrait mid story is non blocking (it just letterboxes), matching the legacy
-## Inkfall behaviour.
+## The landscape prompt, a faithful port of the legacy Inkfall viewport.js gate.
+##
+## On a touch device held in portrait, pressing ENTER raises a full screen prompt that offers
+## ROTATE TO LANDSCAPE (fullscreen plus orientation lock where possible) or STAY IN PORTRAIT
+## (plays letterboxed). Turning the phone by hand while the prompt is up clears it at once.
+## On desktop or when already landscape the gate never appears. After the gate has been passed
+## once, returning to portrait mid story is non blocking (it just letterboxes), matching the
+## legacy Inkfall behaviour.
+##
+## Key differences from a naive implementation:
+##   - experienceStarted guard: resize and orientation events are ignored until begin_story().
+##   - storyStarted flag: the started signal fires exactly once per story, never on later resizes.
+##   - 220ms settle debounce: orientation and fullscreen changes fire event bursts, so we wait
+##     220ms after the last event before judging, matching the legacy scheduleEvaluate.
 
-## Emitted when the gate unblocks (landscape reached or portrait accepted), so the flow can start.
-signal unblocked
+## Emitted once when the gate clears and the story should begin playing (the opening sequence).
+## Fires exactly once per story, never again on later orientation changes.
+signal started
 
 const SKIP_DELAY := 4.0  ## seconds before STAY IN PORTRAIT appears on no fullscreen devices
+const SETTLE_MS := 220   ## debounce: wait this long after the last resize before judging
 
 @onready var _bg: ColorRect = $BG
 @onready var _center: CenterContainer = $Center
@@ -21,9 +31,12 @@ const SKIP_DELAY := 4.0  ## seconds before STAY IN PORTRAIT appears on no fullsc
 @onready var _btn_skip: Button = $Center/VBox/BtnSkip
 
 var _is_touch := false
-var _gate_passed := false
-var _gate_blocked := false
+var _experience_started := false  ## ENTER pressed, a story is on its way in
+var _story_started := false       ## started signal has fired (the play clock is live)
+var _gate_passed := false         ## landscape reached (button or by hand), or portrait accepted
+var _gate_blocked := false        ## the landscape prompt is up right now
 var _skip_timer: SceneTreeTimer
+var _settle_timer: SceneTreeTimer
 
 
 func _ready() -> void:
@@ -35,23 +48,27 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_schedule_evaluate)
 
 
-## Called when a story begins. If the device is in landscape already and can fullscreen, slip into
-## fullscreen silently. Otherwise evaluate whether the gate should block.
+## Called when a story begins (ENTER pressed). If the device is in landscape already and can
+## fullscreen, slip into fullscreen silently. Otherwise evaluate() raises the landscape prompt
+## and the viewer chooses ROTATE TO LANDSCAPE or STAY IN PORTRAIT.
 func begin_story() -> void:
+	_experience_started = true
+	_story_started = false
 	_gate_passed = false
 	_gate_blocked = false
 	if _is_touch and _can_fullscreen() and _is_landscape():
 		_enter_fullscreen()
-		_evaluate()
-	else:
-		_evaluate()
+	_evaluate()
 
 
-## Reset all flags when returning to the start screen so the gate runs fresh on the next story.
+## Back to the start screen: reset the gate so it runs fresh on the next story.
 func reset() -> void:
+	_experience_started = false
+	_story_started = false
 	_gate_passed = false
 	_gate_blocked = false
 	_clear_skip_timer()
+	_clear_settle_timer()
 	_hide_overlay()
 
 
@@ -68,10 +85,6 @@ func _is_landscape() -> bool:
 
 
 func _can_fullscreen() -> bool:
-	# Godot can enter fullscreen on any platform via DisplayServer. On iOS (where the legacy project
-	# could not fullscreen the canvas) the orientation lock and fullscreen still work natively, so
-	# we always allow it on touch devices. The no fullscreen path is kept for web exports where the
-	# API may be unavailable.
 	if OS.has_feature("web"):
 		return JavaScriptBridge.eval("!!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)", true)
 	return true
@@ -79,12 +92,19 @@ func _can_fullscreen() -> bool:
 
 # --- flow ------------------------------------------------------------------------------
 
+## Orientation and fullscreen changes can fire a burst of events, so settle briefly before
+## judging. This matches the legacy's scheduleEvaluate (220ms setTimeout).
 func _schedule_evaluate() -> void:
-	# Defer one frame so the viewport size is settled after a resize.
-	_evaluate.call_deferred()
+	if not _experience_started:
+		return
+	_clear_settle_timer()
+	_settle_timer = get_tree().create_timer(SETTLE_MS / 1000.0, true, false, true)
+	_settle_timer.timeout.connect(_evaluate)
 
 
 func _evaluate() -> void:
+	if not _experience_started:
+		return
 	if _is_landscape():
 		_gate_passed = true
 	_gate_blocked = _is_touch and not _gate_passed and not _is_landscape()
@@ -92,6 +112,10 @@ func _evaluate() -> void:
 		_show_overlay()
 	else:
 		_hide_overlay()
+		if not _story_started:
+			_story_started = true
+			started.emit()
+	_clear_settle_timer()
 
 
 func _show_overlay() -> void:
@@ -105,8 +129,6 @@ func _show_overlay() -> void:
 	_btn_skip.visible = false
 	_clear_skip_timer()
 	if no_fs:
-		# On devices that cannot fullscreen (web on iOS), delay the skip button so the viewer is
-		# nudged to rotate first.
 		_skip_timer = get_tree().create_timer(SKIP_DELAY, true, false, true)
 		_skip_timer.timeout.connect(func(): _btn_skip.visible = true)
 	else:
@@ -120,16 +142,20 @@ func _hide_overlay() -> void:
 	visible = false
 	_clear_skip_timer()
 	_apply_pause(false)
-	unblocked.emit()
 
 
 func _clear_skip_timer() -> void:
 	if _skip_timer and _skip_timer.time_left > 0:
-		# SceneTreeTimers cannot be cancelled, but disconnecting the callback is enough.
-		if _skip_timer.timeout.get_connections().size() > 0:
-			for c in _skip_timer.timeout.get_connections():
-				_skip_timer.timeout.disconnect(c.callable)
+		for c in _skip_timer.timeout.get_connections():
+			_skip_timer.timeout.disconnect(c.callable)
 	_skip_timer = null
+
+
+func _clear_settle_timer() -> void:
+	if _settle_timer and _settle_timer.time_left > 0:
+		for c in _settle_timer.timeout.get_connections():
+			_settle_timer.timeout.disconnect(c.callable)
+	_settle_timer = null
 
 
 func _apply_pause(p: bool) -> void:

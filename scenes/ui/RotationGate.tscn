@@ -37,7 +37,7 @@ alignment = 1
 
 [node name="PhoneIcon" type="Control" parent="Center/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(66, 110)
+custom_minimum_size = Vector2(118, 118)
 size_flags_horizontal = 4
 script = ExtResource("2")
 

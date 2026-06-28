@@ -72,10 +72,12 @@ func _build_crossfade() -> void:
 
 func _on_enter(story: Story) -> void:
 	GameState.load_story(story)
+	# Legacy sequence: hide the start screen first (like setStage('playing') in boot.js), then raise
+	# the gate. The gate's opaque BG covers the now hidden start screen.
+	_start.visible = false
 	_gate.begin_story()
 	if _gate.is_blocked():
-		await _gate.unblocked
-	_start.visible = false
+		await _gate.started
 	_hud.build_nav(GameState.act_titles())
 	await _open_story(story)
 	_hud.begin_play()

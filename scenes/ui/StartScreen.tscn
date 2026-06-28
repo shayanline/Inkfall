@@ -56,7 +56,6 @@ theme_type_variation = &"Subtitle"
 horizontal_alignment = 1
 
 [node name="Blurb" type="Label" parent="Center/VBox"]
-custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
 theme_type_variation = &"Blurb"
 horizontal_alignment = 1
