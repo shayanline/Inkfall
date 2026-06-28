@@ -11,6 +11,8 @@ signal line_changed(index: int)
 signal fx(event: String)
 
 const RAIN_SCENE := preload("res://scenes/effects/RainField.tscn")
+const RIPPLES_SCENE := preload("res://scenes/effects/RainRipples.tscn")
+const SHIMMER_SCENE := preload("res://scenes/effects/WetFloorShimmer.gd")
 const LIGHTNING_SCENE := preload("res://scenes/effects/Lightning.tscn")
 
 var act: Act
@@ -27,6 +29,7 @@ var flags := {}
 var _key_light: PointLight2D
 var _moon_light: PointLight2D
 var _rain: RainField
+var _ripples: RainRipples
 var _lightning: Lightning
 
 
@@ -103,14 +106,51 @@ func _spawn(p: Placement, base_z: int) -> BoardObject:
 	return obj
 
 
+## Gather all PointLight2D positions, colours and radii for ripple light sampling.
+func _collect_lights() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for child in get_children():
+		if child is PointLight2D:
+			var L: PointLight2D = child
+			out.append({
+				"pos": L.position,
+				"col": L.color,
+				"radius": L.texture_scale * 256.0,
+				"energy": L.energy,
+			})
+		elif child is BoardLight:
+			var bl: BoardLight = child
+			if bl._light:
+				out.append({
+					"pos": bl.global_position + bl._light.position,
+					"col": bl._light.color,
+					"radius": bl._light.texture_scale * 256.0,
+					"energy": bl._light.energy,
+				})
+	return out
+
+
 func _build_weather() -> void:
 	if act.indoor:
 		return
 	_rain = RAIN_SCENE.instantiate()
 	_rain.blood = act.blood_rain
 	_rain.area = size
+	_rain.ground_y = ground_y
 	_rain.z_index = 60
 	add_child(_rain)
+	_ripples = RIPPLES_SCENE.instantiate()
+	_ripples.blood = act.blood_rain
+	_ripples.area = size
+	_ripples.ground_y = ground_y
+	_ripples.lights = _collect_lights()
+	_ripples.z_index = 55
+	add_child(_ripples)
+	var shimmer := WetFloorShimmer.new()
+	shimmer.area = size
+	shimmer.ground_y = ground_y
+	shimmer.z_index = 50
+	add_child(shimmer)
 	_lightning = LIGHTNING_SCENE.instantiate()
 	_lightning.area = size
 	_lightning.z_index = 70
