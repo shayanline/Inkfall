@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Palette="*res://autoload/Palette.gd"
+UIScale="*res://autoload/UIScale.gd"
 AudioDirector="*res://autoload/AudioDirector.gd"
 Transitions="*res://scenes/transitions/Transitions.tscn"
 GameState="*res://autoload/GameState.gd"

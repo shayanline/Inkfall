@@ -54,6 +54,11 @@ var _ended := false
 var _controls_seen := false
 var _poster_image: Image
 
+# references kept for rescaling
+var _topbar: HBoxContainer
+var _chips: Array[Button] = []
+var _actsel_col: VBoxContainer
+
 
 func _ready() -> void:
 	# the pause menu lives here, so the HUD must keep processing input while the rest of the tree is
@@ -67,6 +72,8 @@ func _ready() -> void:
 	_build_menu()
 	_build_poster()
 	GameState.line_changed.connect(_on_line_changed)
+	UIScale.scale_changed.connect(_rescale)
+	_rescale()
 
 
 # --- construction --------------------------------------------------------
@@ -151,20 +158,22 @@ func _build_tap() -> void:
 
 
 func _build_topbar() -> void:
-	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", _GAP)
-	bar.mouse_filter = Control.MOUSE_FILTER_PASS
-	bar.anchor_left = 1.0
-	bar.anchor_right = 1.0
-	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	bar.offset_left = -220.0
-	bar.offset_right = -_EDGE
-	bar.offset_top = _EDGE
-	bar.alignment = BoxContainer.ALIGNMENT_END
-	add_child(bar)
-	bar.add_child(_chip(HudIcon.Kind.POSTER, func(): poster_requested.emit(), "Save a poster of this frame"))
-	bar.add_child(_chip(HudIcon.Kind.FULLSCREEN, _toggle_fullscreen, "Fullscreen"))
-	bar.add_child(_chip(HudIcon.Kind.MENU, _open_menu, "Menu"))
+	_topbar = HBoxContainer.new()
+	_topbar.add_theme_constant_override("separation", _GAP)
+	_topbar.mouse_filter = Control.MOUSE_FILTER_PASS
+	_topbar.anchor_left = 1.0
+	_topbar.anchor_right = 1.0
+	_topbar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_topbar.offset_left = -220.0
+	_topbar.offset_right = -_EDGE
+	_topbar.offset_top = _EDGE
+	_topbar.alignment = BoxContainer.ALIGNMENT_END
+	add_child(_topbar)
+	_chips.append(_chip(HudIcon.Kind.POSTER, func(): poster_requested.emit(), "Save a poster of this frame"))
+	_chips.append(_chip(HudIcon.Kind.FULLSCREEN, _toggle_fullscreen, "Fullscreen"))
+	_chips.append(_chip(HudIcon.Kind.MENU, _open_menu, "Menu"))
+	for c in _chips:
+		_topbar.add_child(c)
 
 
 func _chip(kind: HudIcon.Kind, on_press: Callable, tip: String) -> Button:
@@ -184,7 +193,8 @@ func _chip(kind: HudIcon.Kind, on_press: Callable, tip: String) -> Button:
 
 
 func _build_actsel() -> void:
-	var col := VBoxContainer.new()
+	_actsel_col = VBoxContainer.new()
+	var col := _actsel_col
 	col.add_theme_constant_override("separation", _GAP)
 	col.mouse_filter = Control.MOUSE_FILTER_PASS
 	col.position = Vector2(_EDGE, _EDGE)
@@ -693,3 +703,28 @@ func _on_line_changed(_idx: int) -> void:
 	var line := GameState.current_line()
 	if line:
 		show_caption(line.text)
+
+
+# --- responsive scaling --------------------------------------------------
+
+## Apply responsive sizes from UIScale, mirroring the legacy CSS vmin system.
+func _rescale() -> void:
+	var cell := float(UIScale.hud_cell)
+	# scene tag
+	_tag.add_theme_font_size_override("font_size", UIScale.fs_label)
+	# caption
+	_caption_label.add_theme_font_size_override("normal_font_size", UIScale.fs_caption)
+	_caption_label.add_theme_font_size_override("bold_font_size", UIScale.fs_caption)
+	_caption_label.custom_minimum_size.x = UIScale.caption_min_w
+	_cap_tex.offset_bottom = -UIScale.caption_bottom
+	# tap note
+	_tap.add_theme_font_size_override("font_size", UIScale.fs_note)
+	_tap.offset_bottom = -UIScale.tap_bottom
+	_tap.offset_top = -UIScale.tap_bottom - 24
+	# top bar chips
+	for chip in _chips:
+		chip.custom_minimum_size = Vector2(cell, cell)
+		chip.add_theme_font_size_override("font_size", UIScale.fs_hud)
+	# review act button
+	_review_btn.custom_minimum_size = Vector2(cell * 3 + _GAP * 2, cell)
+	_review_btn.add_theme_font_size_override("font_size", UIScale.fs_hud)

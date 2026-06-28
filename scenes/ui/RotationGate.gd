@@ -26,6 +26,8 @@ const SETTLE_MS := 220   ## debounce: wait this long after the last resize befor
 @onready var _msg_nofs: Label = $Center/VBox/MessageNoFS
 @onready var _btn_rotate: Button = $Center/VBox/BtnRotate
 @onready var _btn_skip: Button = $Center/VBox/BtnSkip
+@onready var _phone_icon: Control = $Center/VBox/PhoneIcon
+@onready var _vbox: VBoxContainer = $Center/VBox
 
 var _is_touch := false
 var _experience_started := false  ## ENTER pressed, a story is on its way in
@@ -43,6 +45,8 @@ func _ready() -> void:
 	_btn_rotate.pressed.connect(_on_rotate_pressed)
 	_btn_skip.pressed.connect(_on_skip_pressed)
 	get_viewport().size_changed.connect(_schedule_evaluate)
+	UIScale.scale_changed.connect(_rescale)
+	_rescale()
 
 
 ## Called when a story begins (ENTER pressed). If the device is in landscape already and can
@@ -178,3 +182,26 @@ func _enter_fullscreen() -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("try { screen.orientation.lock('landscape').catch(()=>{}) } catch(e) {}", true)
+
+
+## Apply responsive font and layout sizes from UIScale.
+func _rescale() -> void:
+	_msg_fs.add_theme_font_size_override("font_size", UIScale.fs_sub)
+	_msg_nofs.add_theme_font_size_override("font_size", UIScale.fs_body)
+	_btn_rotate.add_theme_font_size_override("font_size", UIScale.fs_menu)
+	_btn_skip.add_theme_font_size_override("font_size", UIScale.fs_menu)
+	# scale the phone icon proportionally
+	var icon_sz := clampf(UIScale.vmin * 0.12, 64, 118)
+	_phone_icon.custom_minimum_size = Vector2(icon_sz, icon_sz)
+	_vbox.add_theme_constant_override("separation", roundi(UIScale.vmin * 0.03))
+	# gate button padding
+	for btn in [_btn_rotate, _btn_skip]:
+		for state in ["normal", "hover", "pressed"]:
+			var sb: StyleBox = btn.get_theme_stylebox(state)
+			if sb is StyleBoxFlat:
+				var dup := sb.duplicate() as StyleBoxFlat
+				dup.content_margin_left = UIScale.gate_pad_h
+				dup.content_margin_right = UIScale.gate_pad_h
+				dup.content_margin_top = UIScale.gate_pad_v
+				dup.content_margin_bottom = UIScale.gate_pad_v
+				btn.add_theme_stylebox_override(state, dup)

@@ -18,10 +18,16 @@ const _TAG_CUR := Color(0.918, 0.353, 0.353, 1)
 
 @export var library: StoryLibrary
 
+@onready var _title_head: Label = $Center/VBox/Title/Head
+@onready var _title_tail: Label = $Center/VBox/Title/Tail
 @onready var _subtitle: Label = $Center/VBox/Subtitle
 @onready var _blurb: Label = $Center/VBox/Blurb
+@onready var _heading: Label = $Center/VBox/Heading
 @onready var _tales: HBoxContainer = $Center/VBox/Tales
 @onready var _enter: Button = $Center/VBox/Enter
+@onready var _vbox: VBoxContainer = $Center/VBox
+@onready var _spacer1: Control = $Center/VBox/Spacer1
+@onready var _spacer2: Control = $Center/VBox/Spacer2
 
 var _stories: Array[Story] = []
 var _selected := 0
@@ -42,6 +48,9 @@ func _ready() -> void:
 
 	if not _stories.is_empty():
 		_select(0)
+
+	UIScale.scale_changed.connect(_rescale)
+	_rescale()
 
 
 func _make_card(s: Story, idx: int) -> PanelContainer:
@@ -117,3 +126,34 @@ func _restyle(idx: int, hovered: bool) -> void:
 		card.theme_type_variation = &"StoryCard"
 		name_lbl.add_theme_color_override("font_color", _NAME_DIM)
 		tag_lbl.add_theme_color_override("font_color", _TAG_DIM)
+
+
+## Apply responsive font sizes from the UIScale autoload, mirroring the legacy CSS vmin system.
+func _rescale() -> void:
+	_title_head.add_theme_font_size_override("font_size", UIScale.fs_title)
+	_title_tail.add_theme_font_size_override("font_size", UIScale.fs_title)
+	_subtitle.add_theme_font_size_override("font_size", UIScale.fs_sub)
+	_blurb.add_theme_font_size_override("font_size", UIScale.fs_body)
+	_heading.add_theme_font_size_override("font_size", UIScale.fs_label)
+	_enter.add_theme_font_size_override("font_size", UIScale.fs_sub)
+	_vbox.add_theme_constant_override("separation", UIScale.vbox_sep)
+	_spacer1.custom_minimum_size.y = UIScale.spacer
+	_spacer2.custom_minimum_size.y = UIScale.spacer
+	# enter button padding
+	for state in ["normal", "hover", "pressed"]:
+		var sb: StyleBox = _enter.get_theme_stylebox(state)
+		if sb is StyleBoxFlat:
+			var dup := sb.duplicate() as StyleBoxFlat
+			dup.content_margin_left = UIScale.enter_pad_h
+			dup.content_margin_right = UIScale.enter_pad_h
+			dup.content_margin_top = UIScale.enter_pad_v
+			dup.content_margin_bottom = UIScale.enter_pad_v
+			_enter.add_theme_stylebox_override(state, dup)
+	# story cards
+	for card in _cards:
+		var name_lbl: Label = card.get_meta(&"name_lbl")
+		var tag_lbl: Label = card.get_meta(&"tag_lbl")
+		name_lbl.add_theme_font_size_override("font_size", UIScale.fs_sub)
+		name_lbl.custom_minimum_size.x = UIScale.card_min_w
+		tag_lbl.add_theme_font_size_override("font_size", UIScale.fs_label)
+		tag_lbl.custom_minimum_size.x = UIScale.card_min_w

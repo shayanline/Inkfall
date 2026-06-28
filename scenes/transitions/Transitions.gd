@@ -12,6 +12,11 @@ var _progress := 0.0
 var _card_slot := 0
 
 
+func _ready() -> void:
+	UIScale.scale_changed.connect(_rescale)
+	_rescale()
+
+
 func _set_progress(v: float) -> void:
 	_progress = v
 	_ink.material.set_shader_parameter("progress", v)
@@ -86,3 +91,10 @@ func clear() -> void:
 	for c in _cards:
 		c.modulate.a = 0.0
 	_end.modulate.a = 0.0
+
+
+## Apply responsive font sizes from UIScale.
+func _rescale() -> void:
+	for c in _cards:
+		c.add_theme_font_size_override("font_size", UIScale.fs_card)
+	_end.add_theme_font_size_override("font_size", UIScale.fs_end)

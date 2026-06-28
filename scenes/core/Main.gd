@@ -25,6 +25,12 @@ var _snapping := false
 var _shake := 0.0
 var _xfade: TextureRect
 
+# letterbox bars (black rects that mask extreme aspect ratios)
+var _bar_top: ColorRect
+var _bar_bottom: ColorRect
+var _bar_left: ColorRect
+var _bar_right: ColorRect
+
 
 func _ready() -> void:
 	_post_mat = _post.material
@@ -32,6 +38,7 @@ func _ready() -> void:
 	_camera.position = get_viewport_rect().size * 0.5
 	_build_void_fill()
 	_build_crossfade()
+	_build_letterbox()
 
 	_start.entered.connect(_on_enter)
 	_hud.nav_selected.connect(_on_nav_selected)
@@ -66,6 +73,57 @@ func _build_crossfade() -> void:
 	_xfade.stretch_mode = TextureRect.STRETCH_SCALE
 	_xfade.modulate = Color(1, 1, 1, 0)
 	layer.add_child(_xfade)
+
+
+## Black bars that mask extreme aspect ratios, matching the legacy letterbox.
+## The bars sit on a CanvasLayer between the post FX (layer 1) and the UI (layer 10).
+## On a normal 16:9 or 16:10 display none of them are visible. On a phone in portrait (too
+## tall) the top and bottom bars show. On an ultrawide (too wide) the left and right bars show.
+func _build_letterbox() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 9
+	add_child(layer)
+	_bar_top = _make_bar(layer)
+	_bar_bottom = _make_bar(layer)
+	_bar_left = _make_bar(layer)
+	_bar_right = _make_bar(layer)
+	_layout_letterbox()
+
+
+func _make_bar(parent: Node) -> ColorRect:
+	var bar := ColorRect.new()
+	bar.color = Color.BLACK
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.visible = false
+	parent.add_child(bar)
+	return bar
+
+
+func _layout_letterbox() -> void:
+	var r := UIScale.content_rect
+	var vp := get_viewport().get_visible_rect().size
+	# too tall: bars top and bottom
+	if r.position.y > 0.5:
+		_bar_top.visible = true
+		_bar_top.position = Vector2.ZERO
+		_bar_top.size = Vector2(vp.x, r.position.y)
+		_bar_bottom.visible = true
+		_bar_bottom.position = Vector2(0, r.position.y + r.size.y)
+		_bar_bottom.size = Vector2(vp.x, vp.y - r.position.y - r.size.y)
+	else:
+		_bar_top.visible = false
+		_bar_bottom.visible = false
+	# too wide: bars left and right
+	if r.position.x > 0.5:
+		_bar_left.visible = true
+		_bar_left.position = Vector2.ZERO
+		_bar_left.size = Vector2(r.position.x, vp.y)
+		_bar_right.visible = true
+		_bar_right.position = Vector2(r.position.x + r.size.x, 0)
+		_bar_right.size = Vector2(vp.x - r.position.x - r.size.x, vp.y)
+	else:
+		_bar_left.visible = false
+		_bar_right.visible = false
 
 
 # --- flow ----------------------------------------------------------------------------------
@@ -430,3 +488,4 @@ func _on_resize() -> void:
 	_camera.position = vp * 0.5
 	if _post_mat:
 		_post_mat.set_shader_parameter("screen_size", vp)
+	_layout_letterbox()
