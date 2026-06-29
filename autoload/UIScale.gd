@@ -36,7 +36,7 @@ const ASPECT_MAX := 21.0 / 9.0    # 2.333
 ## right). All are 1.0 off touch web, so desktop and native are unchanged. Tune these to taste.
 const MOBILE_UI_BOOST := 1.6    ## general HUD, start screen, gate, chips, wordmark
 const TITLE_BOOST := 1.9        ## the big act and end title cards
-const CAPTION_BOOST := 1.15     ## the narration caption (kept smaller)
+const CAPTION_BOOST := 1.45     ## the narration caption
 
 ## The clamped content rectangle in viewport coordinates. UI should be laid out within this.
 ## On a normal 16:9 or 16:10 display this equals the full viewport.
@@ -207,8 +207,8 @@ func _recompute() -> void:
 	fs_sub = _clamp_i(roundi(15 * ui_s), vmin * 0.03, roundi(22 * ui_s))
 	fs_body = _clamp_i(roundi(14 * ui_s), vmin * 0.024, roundi(19 * ui_s))
 	fs_menu = _clamp_i(roundi(13 * ui_s), vmin * 0.022, roundi(15 * ui_s))
-	# the caption was reading too large, so its bounds are about half the others
-	fs_caption = _clamp_i(roundi(7 * ui_cap), vmin * 0.012, roundi(9 * ui_cap))
+	# the caption reads at a comfortable size near the HUD; it wraps to new lines when it does not fit
+	fs_caption = _clamp_i(roundi(11 * ui_cap), vmin * 0.02, roundi(14 * ui_cap))
 	fs_label = _clamp_i(roundi(11 * ui), vmin * 0.02, roundi(14 * ui))
 	fs_hud = _clamp_i(roundi(10 * ui), vmin * 0.02, roundi(13 * ui))
 	fs_icon = _clamp_i(roundi(14 * ui), vmin * 0.03, roundi(18 * ui))
