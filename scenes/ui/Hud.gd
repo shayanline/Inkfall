@@ -206,11 +206,24 @@ func _build_actsel() -> void:
 
 	_review_btn = Button.new()
 	_review_btn.theme_type_variation = &"ReviewButton"
-	_review_btn.text = "REVIEW ACT  ▾"
+	_review_btn.text = "REVIEW ACT"
 	_review_btn.custom_minimum_size = Vector2(_CELL * 3 + _GAP * 2, _CELL)
 	_review_btn.focus_mode = Control.FOCUS_NONE
 	_review_btn.visible = false
 	_review_btn.pressed.connect(_toggle_drop)
+	# the dropdown chevron, drawn in code so it renders on the web Compatibility build
+	var chevron := Glyph.new()
+	chevron.kind = Glyph.Kind.CHEVRON
+	chevron.color = Color(0.847, 0.831, 0.784, 1)
+	chevron.anchor_left = 1.0
+	chevron.anchor_right = 1.0
+	chevron.anchor_top = 0.5
+	chevron.anchor_bottom = 0.5
+	chevron.offset_left = -22.0
+	chevron.offset_right = -8.0
+	chevron.offset_top = -5.0
+	chevron.offset_bottom = 5.0
+	_review_btn.add_child(chevron)
 	col.add_child(_review_btn)
 
 	_navdrop = VBoxContainer.new()
@@ -368,17 +381,19 @@ func _menu_item(text: String, variation: StringName, on_press: Callable) -> Butt
 	return b
 
 
-func _menu_dot(ax: float) -> Label:
-	var d := Label.new()
-	d.text = "\u25C6"
-	d.add_theme_font_size_override("font_size", 11)
-	d.add_theme_color_override("font_color", Color(0.882, 0, 0.063))
+func _menu_dot(ax: float) -> Glyph:
+	# drawn in code (not a font glyph), so the red diamond renders on the web Compatibility build too
+	var d := Glyph.new()
+	d.kind = Glyph.Kind.DIAMOND
+	d.color = Color(0.882, 0, 0.063)
 	d.anchor_left = ax
 	d.anchor_right = ax
 	d.anchor_top = 0.5
 	d.anchor_bottom = 0.5
-	d.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	d.grow_vertical = Control.GROW_DIRECTION_BOTH
+	d.offset_left = -5.0
+	d.offset_right = 5.0
+	d.offset_top = -5.0
+	d.offset_bottom = 5.0
 	d.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return d
 
