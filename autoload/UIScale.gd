@@ -10,6 +10,13 @@ extends Node
 ## right when too wide). The HUD, captions and navigation use the full viewport.
 ## The vmin is computed from the clamped content area, not the raw viewport.
 ##
+## HiDPI / web export note: Godot 4 web exports size the canvas to physical pixels
+## (window.innerWidth * devicePixelRatio). The viewport therefore reports physical pixel
+## dimensions. All constant bounds (the CSS-calibrated min/max clamp values) are multiplied by
+## the device pixel ratio so font sizes, touch targets, and margins appear at the intended
+## physical size on screen. The factor-based values (vmin * factor) already scale correctly
+## because vmin is derived from the physical viewport.
+##
 ## Usage: connect to `scale_changed`, then read the font sizes (fs_title, fs_sub, etc.) and
 ## apply them as theme font size overrides on your labels and buttons.
 
@@ -30,8 +37,24 @@ var content_rect := Rect2()
 ## UI anchored at the bottom should offset by at least this much.
 var safe_bottom := 0.0
 
-## The smaller dimension of the clamped content area, the Godot equivalent of CSS vmin.
+## The smaller dimension of the clamped content area in physical pixels (the Godot equivalent
+## of CSS vmin, already scaled by dpr). The constant bounds in each clamp call are also scaled
+## by dpr, so callers that use `vmin * factor` get a physical-pixel result without extra work.
 var vmin := 1080.0
+
+## Device pixel ratio. On web exports the canvas is sized to physical pixels; on all other
+## platforms Godot handles HiDPI internally and this is always 1.0.
+var dpr := 1.0
+
+## Gap between adjacent HUD chips (physical pixels). Scaled by dpr.
+var gap := 6.0
+
+## Screen edge inset for positioned HUD elements (physical pixels). Scaled by dpr.
+var edge := 20.0
+
+## Vertical extent of the end-of-story act row (physical pixels). Scaled by dpr.
+var end_box_top := 240.0
+var end_box_bottom := 90.0
 
 # --- the type scale, matching the legacy CSS variables ---
 # Each is recomputed on resize as clamp(min_px, factor * vmin, max_px).
@@ -108,11 +131,16 @@ func _ready() -> void:
 
 func _recompute() -> void:
 	var vp := get_viewport().get_visible_rect().size
-	var vw := vp.x
-	var vh := vp.y
+	# On HiDPI web exports the viewport is in physical pixels. Divide by dpr to recover CSS
+	# dimensions, clamp to the aspect band in CSS space, then multiply back to get physical
+	# pixel content_rect and vmin. All constant bounds are scaled by dpr so physical outputs
+	# match the CSS-calibrated targets.
+	dpr = _dpr()
+	var vw := vp.x / dpr
+	var vh := vp.y / dpr
 	var ar := vw / maxf(vh, 1.0)
 
-	# clamp to the aspect band (matching legacy engine.resize)
+	# clamp to the aspect band in CSS pixels (matching legacy engine.resize)
 	var cw := vw
 	var ch := vh
 	if ar < ASPECT_MIN:
@@ -120,52 +148,58 @@ func _recompute() -> void:
 	elif ar > ASPECT_MAX:
 		cw = roundf(vh * ASPECT_MAX)    # too wide: cap the width
 
-	# content rect, centered in the viewport
-	var cx := (vw - cw) * 0.5
-	var cy := (vh - ch) * 0.5
-	content_rect = Rect2(cx, cy, cw, ch)
-	safe_bottom = vh - (cy + ch)
+	# content rect in physical viewport pixels, centered
+	var cx := (vp.x - cw * dpr) * 0.5
+	var cy := (vp.y - ch * dpr) * 0.5
+	content_rect = Rect2(cx, cy, cw * dpr, ch * dpr)
+	safe_bottom = vp.y - (cy + ch * dpr)
 
-	# vmin: the smaller clamped dimension
-	vmin = minf(cw, ch)
+	# vmin in physical pixels: CSS vmin * dpr. The factor-based terms (vmin * factor) already
+	# produce physical-pixel results, so only the constant bounds need multiplying by dpr.
+	vmin = minf(cw, ch) * dpr
 
-	# recompute every size, mirroring the legacy CSS clamp(min, factor * vmin, max)
-	fs_title = _clamp_i(54, vmin * 0.14, 130)
-	fs_sub = _clamp_i(15, vmin * 0.03, 22)
-	fs_body = _clamp_i(14, vmin * 0.024, 19)
-	fs_menu = _clamp_i(13, vmin * 0.022, 15)
-	fs_caption = _clamp_i(13, vmin * 0.024, 18)
-	fs_label = _clamp_i(11, vmin * 0.02, 14)
-	fs_hud = _clamp_i(10, vmin * 0.02, 13)
-	fs_icon = _clamp_i(14, vmin * 0.03, 18)
-	fs_note = _clamp_i(8, vmin * 0.016, 11)
-	fs_tagline = _clamp_i(12, vmin * 0.02, 15)
+	# recompute every size: clamp(min_css * dpr, factor * vmin, max_css * dpr)
+	fs_title = _clamp_i(roundi(54 * dpr), vmin * 0.14, roundi(130 * dpr))
+	fs_sub = _clamp_i(roundi(15 * dpr), vmin * 0.03, roundi(22 * dpr))
+	fs_body = _clamp_i(roundi(14 * dpr), vmin * 0.024, roundi(19 * dpr))
+	fs_menu = _clamp_i(roundi(13 * dpr), vmin * 0.022, roundi(15 * dpr))
+	fs_caption = _clamp_i(roundi(13 * dpr), vmin * 0.024, roundi(18 * dpr))
+	fs_label = _clamp_i(roundi(11 * dpr), vmin * 0.02, roundi(14 * dpr))
+	fs_hud = _clamp_i(roundi(10 * dpr), vmin * 0.02, roundi(13 * dpr))
+	fs_icon = _clamp_i(roundi(14 * dpr), vmin * 0.03, roundi(18 * dpr))
+	fs_note = _clamp_i(roundi(8 * dpr), vmin * 0.016, roundi(11 * dpr))
+	fs_tagline = _clamp_i(roundi(12 * dpr), vmin * 0.02, roundi(15 * dpr))
 
-	hud_cell = _clamp_i(34, vmin * 0.06, 52)
+	hud_cell = _clamp_i(roundi(34 * dpr), vmin * 0.06, roundi(52 * dpr))
 
 	# transition cards scale from min(W, H) like the legacy canvas renderer
-	var mn := minf(cw, ch)
-	fs_card = maxi(24, roundi(mn * 0.07))
-	fs_end = maxi(30, roundi(mn * 0.085))
+	var mn := minf(cw, ch) * dpr
+	fs_card = maxi(roundi(24 * dpr), roundi(mn * 0.07))
+	fs_end = maxi(roundi(30 * dpr), roundi(mn * 0.085))
 
-	# derived layout values
-	card_min_w = clampf(cw * 0.16, 200, 340)
-	enter_pad_h = clampf(vmin * 0.06, 36, 64)
-	enter_pad_v = clampf(vmin * 0.022, 14, 22)
-	card_pad_h = clampf(vmin * 0.04, 20, 32)
-	card_pad_v = clampf(vmin * 0.026, 14, 20)
-	gate_pad_h = clampf(vmin * 0.03, 16, 30)
-	gate_pad_v = clampf(vmin * 0.018, 12, 18)
-	spacer = clampf(vmin * 0.022, 10, 30)
-	vbox_sep = _clamp_i(8, vmin * 0.014, 18)
-	tales_gap = _clamp_i(12, vmin * 0.02, 18)
-	card_sep = _clamp_i(6, vmin * 0.012, 10)
-	caption_min_w = clampf(cw * 0.30, 320, 600)
-	caption_max_w = minf(cw * 0.9, 600)
-	caption_pad_h = clampf(vmin * 0.022, 12, 18)
-	caption_pad_v = clampf(vmin * 0.017, 9, 13)
-	caption_bottom = clampf(safe_bottom + vmin * 0.04, 24, 60)
-	tap_bottom = maxf(safe_bottom + 6, 10)
+	# derived layout values (all bounds scaled by dpr)
+	card_min_w = clampf(cw * dpr * 0.16, 200 * dpr, 340 * dpr)
+	enter_pad_h = clampf(vmin * 0.06, 36 * dpr, 64 * dpr)
+	enter_pad_v = clampf(vmin * 0.022, 14 * dpr, 22 * dpr)
+	card_pad_h = clampf(vmin * 0.04, 20 * dpr, 32 * dpr)
+	card_pad_v = clampf(vmin * 0.026, 14 * dpr, 20 * dpr)
+	gate_pad_h = clampf(vmin * 0.03, 16 * dpr, 30 * dpr)
+	gate_pad_v = clampf(vmin * 0.018, 12 * dpr, 18 * dpr)
+	spacer = clampf(vmin * 0.022, 10 * dpr, 30 * dpr)
+	vbox_sep = _clamp_i(roundi(8 * dpr), vmin * 0.014, roundi(18 * dpr))
+	tales_gap = _clamp_i(roundi(12 * dpr), vmin * 0.02, roundi(18 * dpr))
+	card_sep = _clamp_i(roundi(6 * dpr), vmin * 0.012, roundi(10 * dpr))
+	caption_min_w = clampf(cw * dpr * 0.30, 320 * dpr, 600 * dpr)
+	caption_max_w = minf(cw * dpr * 0.9, 600 * dpr)
+	caption_pad_h = clampf(vmin * 0.022, 12 * dpr, 18 * dpr)
+	caption_pad_v = clampf(vmin * 0.017, 9 * dpr, 13 * dpr)
+	caption_bottom = clampf(safe_bottom + vmin * 0.04, 24 * dpr, 60 * dpr)
+	tap_bottom = maxf(safe_bottom + 6 * dpr, 10 * dpr)
+
+	gap = 6.0 * dpr
+	edge = 20.0 * dpr
+	end_box_top = 240.0 * dpr
+	end_box_bottom = 90.0 * dpr
 
 	scale_changed.emit()
 
@@ -173,3 +207,15 @@ func _recompute() -> void:
 ## clamp and round to int, used for font sizes
 static func _clamp_i(lo: int, v: float, hi: int) -> int:
 	return clampi(roundi(v), lo, hi)
+
+
+## Returns the device pixel ratio for the current platform.
+## Web exports size the canvas to physical pixels via window.devicePixelRatio.
+## All other platforms handle HiDPI internally, so the viewport is already in logical pixels.
+static func _dpr() -> float:
+	if not OS.has_feature("web"):
+		return 1.0
+	var r = JavaScriptBridge.eval("window.devicePixelRatio", true)
+	if r != null:
+		return maxf(1.0, float(r))
+	return 1.0

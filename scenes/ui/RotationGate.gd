@@ -191,7 +191,7 @@ func _rescale() -> void:
 	_btn_rotate.add_theme_font_size_override("font_size", UIScale.fs_menu)
 	_btn_skip.add_theme_font_size_override("font_size", UIScale.fs_menu)
 	# scale the phone icon proportionally
-	var icon_sz := clampf(UIScale.vmin * 0.12, 64, 118)
+	var icon_sz := clampf(UIScale.vmin * 0.12, 64.0 * UIScale.dpr, 118.0 * UIScale.dpr)
 	_phone_icon.custom_minimum_size = Vector2(icon_sz, icon_sz)
 	_vbox.add_theme_constant_override("separation", roundi(UIScale.vmin * 0.03))
 	# gate button padding

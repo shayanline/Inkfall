@@ -739,9 +739,16 @@ func _on_line_changed(_idx: int) -> void:
 ## Apply responsive sizes from UIScale, mirroring the legacy CSS vmin system.
 func _rescale() -> void:
 	var cell := float(UIScale.hud_cell)
-	# scene tag
+	var gap := UIScale.gap
+	var edg := UIScale.edge
+	# scene tag position
+	_tag.position = Vector2(edg, edg)
 	_tag.add_theme_font_size_override("font_size", UIScale.fs_label)
-	# caption
+	# caption: resize the SubViewport to match caption_max_w so text is never clipped on HiDPI
+	var cap_w := maxi(roundi(UIScale.caption_max_w), _CAP_VP.x)
+	_cap_vp.size = Vector2i(cap_w, _CAP_VP.y) * 2
+	_cap_vp.size_2d_override = Vector2i(cap_w, _CAP_VP.y)
+	_cap_tex.custom_minimum_size = Vector2(cap_w, _CAP_VP.y)
 	_caption_label.add_theme_font_size_override("normal_font_size", UIScale.fs_caption)
 	_caption_label.add_theme_font_size_override("bold_font_size", UIScale.fs_caption)
 	_caption_label.custom_minimum_size.x = UIScale.caption_min_w
@@ -760,10 +767,21 @@ func _rescale() -> void:
 	_tap.add_theme_font_size_override("font_size", UIScale.fs_note)
 	_tap.offset_bottom = -UIScale.tap_bottom
 	_tap.offset_top = -UIScale.tap_bottom - 24
-	# top bar chips
+	# top bar: recompute offset_left from chip count so chips are never clipped
+	var chip_count := _chips.size()
+	_topbar.offset_right = -edg
+	_topbar.offset_top = edg
+	_topbar.offset_left = -(cell * chip_count + gap * (chip_count - 1) + edg)
+	_topbar.add_theme_constant_override("separation", roundi(gap))
 	for chip in _chips:
 		chip.custom_minimum_size = Vector2(cell, cell)
 		chip.add_theme_font_size_override("font_size", UIScale.fs_hud)
-	# review act button
-	_review_btn.custom_minimum_size = Vector2(cell * 3 + _GAP * 2, cell)
+	# review act column and button
+	_actsel_col.position = Vector2(edg, edg)
+	_actsel_col.add_theme_constant_override("separation", roundi(gap))
+	_review_btn.custom_minimum_size = Vector2(cell * 3 + gap * 2, cell)
 	_review_btn.add_theme_font_size_override("font_size", UIScale.fs_hud)
+	# end-of-story act row
+	_end_box.offset_top = -UIScale.end_box_top
+	_end_box.offset_bottom = -UIScale.end_box_bottom
+	_end_row.add_theme_constant_override("separation", roundi(16.0 * UIScale.dpr))
