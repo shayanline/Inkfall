@@ -13,12 +13,19 @@ name: Branch previews
 # The delete event always runs the workflow from the default branch, so this
 # file must live on the default branch for cleanup to fire.
 #
+# The pull_request event (opened, reopened, closed) does not build or publish a
+# preview. It only refreshes the PR column in the index, so a preview row links
+# its open pull request as soon as one exists and drops the link once it closes.
+#
 # Loop prevention (defence in depth, any one layer is enough):
 #   1. All pushes use the automatic GITHUB_TOKEN, and GitHub does not start
 #      new runs from GITHUB_TOKEN pushes.
 #   2. The push trigger ignores the gh-pages branch.
 #   3. Every commit carries [skip ci].
 #   4. The publish job refuses to run for commits authored by the bot.
+#   5. The pull_request trigger fires only on opened, reopened and closed, not
+#      on the bot's push to the default branch, so the index cannot retrigger
+#      itself.
 
 on:
   push:
@@ -26,12 +33,15 @@ on:
       - '**'
       - '!gh-pages'
   delete:
+  pull_request:
+    types: [opened, reopened, closed]
 
 env:
   GODOT_VERSION: "4.7"
 
 permissions:
   contents: write
+  pull-requests: read
 
 # Serialise writes to gh-pages so parallel branch pushes do not collide.
 concurrency:
@@ -123,11 +133,17 @@ jobs:
           fi
 
   # Keep the live preview index in the default branch README in sync. Runs
-  # after a publish or a cleanup. The commit carries [skip ci] so it never
-  # loops.
+  # after a publish or a cleanup, and on a pull_request open, reopen or close to
+  # refresh the PR links. The commit carries [skip ci] so it never loops.
   index:
     needs: [publish, cleanup]
-    if: ${{ always() && (needs.publish.result == 'success' || needs.cleanup.result == 'success') }}
+    if: >-
+      ${{ always() && (
+        needs.publish.result == 'success' ||
+        needs.cleanup.result == 'success' ||
+        (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository)
+      ) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout default branch
@@ -137,20 +153,27 @@ jobs:
           fetch-depth: 0
 
       - name: Update preview index
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           repo="${{ github.event.repository.name }}"
           base="https://${owner}.github.io/${repo}/"
           manifest=".github/previews.json"
-          if [ "${{ github.event_name }}" = "delete" ]; then
-            branch="${{ github.event.ref }}"
-            node .github/scripts/preview-index.mjs remove "$manifest" "$branch"
-          else
-            branch="${GITHUB_REF_NAME}"
-            slug="${branch//\//-}"
-            if [ "$branch" = "master" ]; then url="$base"; else url="${base}${slug}/"; fi
-            node .github/scripts/preview-index.mjs upsert "$manifest" "$branch" "$url" "${GITHUB_SHA:0:7}" "$(date -u '+%Y-%m-%d %H:%M')"
-          fi
+          case "${{ github.event_name }}" in
+            delete)
+              branch="${{ github.event.ref }}"
+              node .github/scripts/preview-index.mjs remove "$manifest" "$branch"
+              ;;
+            push)
+              branch="${GITHUB_REF_NAME}"
+              slug="${branch//\//-}"
+              if [ "$branch" = "master" ]; then url="$base"; else url="${base}${slug}/"; fi
+              node .github/scripts/preview-index.mjs upsert "$manifest" "$branch" "$url" "${GITHUB_SHA:0:7}" "$(date -u '+%Y-%m-%d %H:%M')"
+              ;;
+          esac
+          # Refresh the open PR link on every row, then render the table.
+          node .github/scripts/preview-index.mjs sync-prs "$manifest"
           node .github/scripts/preview-index.mjs render "$manifest" README.md
           if git diff --quiet; then
             echo "Index already up to date."
