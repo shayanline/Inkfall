@@ -29,6 +29,11 @@ signal scale_changed
 const ASPECT_MIN := 16.0 / 10.0   # 1.6
 const ASPECT_MAX := 21.0 / 9.0    # 2.333
 
+## Extra multiplier applied to text and touch target sizes on phones (touch web), on top of dpr.
+## The legacy sizes are calibrated for a desktop CSS viewport and read small on a phone, so this
+## lifts them to a comfortable size. Raise it for bigger UI, lower it toward 1.0 for smaller.
+const MOBILE_UI_BOOST := 1.4
+
 ## The clamped content rectangle in viewport coordinates. UI should be laid out within this.
 ## On a normal 16:9 or 16:10 display this equals the full viewport.
 var content_rect := Rect2()
@@ -144,9 +149,13 @@ func _recompute() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	# On HiDPI web exports the viewport is in physical pixels. Divide by dpr to recover CSS
 	# dimensions, clamp to the aspect band in CSS space, then multiply back to get physical
-	# pixel content_rect and vmin. All constant bounds are scaled by dpr so physical outputs
-	# match the CSS-calibrated targets.
+	# pixel content_rect and vmin.
 	dpr = _dpr()
+	# ui is the text and touch target scale: dpr plus a boost on phones, so the legacy CSS sized
+	# chrome is not left tiny on a small high density screen. Geometry, widths, spacing and the
+	# theme (the pause menu, borders) stay on the true dpr so the layout does not overflow and
+	# thin borders stay crisp. On desktop the boost is 1.0, so the look there is unchanged.
+	var ui := dpr * _ui_boost()
 	var vw := vp.x / dpr
 	var vh := vp.y / dpr
 	var ar := vw / maxf(vh, 1.0)
@@ -166,44 +175,46 @@ func _recompute() -> void:
 	safe_bottom = vp.y - (cy + ch * dpr)
 
 	# vmin in physical pixels: CSS vmin * dpr. The factor-based terms (vmin * factor) already
-	# produce physical-pixel results, so only the constant bounds need multiplying by dpr.
+	# produce physical-pixel results, so only the constant bounds need multiplying.
 	vmin = minf(cw, ch) * dpr
 
-	# recompute every size: clamp(min_css * dpr, factor * vmin, max_css * dpr)
-	fs_title = _clamp_i(roundi(54 * dpr), vmin * 0.14, roundi(130 * dpr))
-	fs_sub = _clamp_i(roundi(15 * dpr), vmin * 0.03, roundi(22 * dpr))
-	fs_body = _clamp_i(roundi(14 * dpr), vmin * 0.024, roundi(19 * dpr))
-	fs_menu = _clamp_i(roundi(13 * dpr), vmin * 0.022, roundi(15 * dpr))
-	fs_caption = _clamp_i(roundi(13 * dpr), vmin * 0.024, roundi(18 * dpr))
-	fs_label = _clamp_i(roundi(11 * dpr), vmin * 0.02, roundi(14 * dpr))
-	fs_hud = _clamp_i(roundi(10 * dpr), vmin * 0.02, roundi(13 * dpr))
-	fs_icon = _clamp_i(roundi(14 * dpr), vmin * 0.03, roundi(18 * dpr))
-	fs_note = _clamp_i(roundi(8 * dpr), vmin * 0.016, roundi(11 * dpr))
-	fs_tagline = _clamp_i(roundi(12 * dpr), vmin * 0.02, roundi(15 * dpr))
+	# font sizes: clamp(min_css * ui, factor * vmin, max_css * ui). The ui boost lifts the small
+	# end of the range on phones, which is where the HUD lands on a 1080 tall content area.
+	fs_title = _clamp_i(roundi(54 * ui), vmin * 0.14, roundi(130 * ui))
+	fs_sub = _clamp_i(roundi(15 * ui), vmin * 0.03, roundi(22 * ui))
+	fs_body = _clamp_i(roundi(14 * ui), vmin * 0.024, roundi(19 * ui))
+	fs_menu = _clamp_i(roundi(13 * ui), vmin * 0.022, roundi(15 * ui))
+	fs_caption = _clamp_i(roundi(13 * ui), vmin * 0.024, roundi(18 * ui))
+	fs_label = _clamp_i(roundi(11 * ui), vmin * 0.02, roundi(14 * ui))
+	fs_hud = _clamp_i(roundi(10 * ui), vmin * 0.02, roundi(13 * ui))
+	fs_icon = _clamp_i(roundi(14 * ui), vmin * 0.03, roundi(18 * ui))
+	fs_note = _clamp_i(roundi(8 * ui), vmin * 0.016, roundi(11 * ui))
+	fs_tagline = _clamp_i(roundi(12 * ui), vmin * 0.02, roundi(15 * ui))
 
-	hud_cell = _clamp_i(roundi(34 * dpr), vmin * 0.06, roundi(52 * dpr))
+	# the chip touch target scales with ui so it stays comfortable to tap on a phone
+	hud_cell = _clamp_i(roundi(34 * ui), vmin * 0.06, roundi(52 * ui))
 
 	# transition cards scale from min(W, H) like the legacy canvas renderer
 	var mn := minf(cw, ch) * dpr
-	fs_card = maxi(roundi(24 * dpr), roundi(mn * 0.07))
-	fs_end = maxi(roundi(30 * dpr), roundi(mn * 0.085))
+	fs_card = maxi(roundi(24 * ui), roundi(mn * 0.07))
+	fs_end = maxi(roundi(30 * ui), roundi(mn * 0.085))
 
-	# derived layout values (all bounds scaled by dpr)
+	# widths stay on dpr (content relative, must not overflow); paddings scale with ui (touch)
 	card_min_w = clampf(cw * dpr * 0.16, 200 * dpr, 340 * dpr)
-	enter_pad_h = clampf(vmin * 0.06, 36 * dpr, 64 * dpr)
-	enter_pad_v = clampf(vmin * 0.022, 14 * dpr, 22 * dpr)
-	card_pad_h = clampf(vmin * 0.04, 20 * dpr, 32 * dpr)
-	card_pad_v = clampf(vmin * 0.026, 14 * dpr, 20 * dpr)
-	gate_pad_h = clampf(vmin * 0.03, 16 * dpr, 30 * dpr)
-	gate_pad_v = clampf(vmin * 0.018, 12 * dpr, 18 * dpr)
+	enter_pad_h = clampf(vmin * 0.06, 36 * ui, 64 * ui)
+	enter_pad_v = clampf(vmin * 0.022, 14 * ui, 22 * ui)
+	card_pad_h = clampf(vmin * 0.04, 20 * ui, 32 * ui)
+	card_pad_v = clampf(vmin * 0.026, 14 * ui, 20 * ui)
+	gate_pad_h = clampf(vmin * 0.03, 16 * ui, 30 * ui)
+	gate_pad_v = clampf(vmin * 0.018, 12 * ui, 18 * ui)
 	spacer = clampf(vmin * 0.022, 10 * dpr, 30 * dpr)
 	vbox_sep = _clamp_i(roundi(8 * dpr), vmin * 0.014, roundi(18 * dpr))
 	tales_gap = _clamp_i(roundi(12 * dpr), vmin * 0.02, roundi(18 * dpr))
 	card_sep = _clamp_i(roundi(6 * dpr), vmin * 0.012, roundi(10 * dpr))
 	caption_min_w = clampf(cw * dpr * 0.30, 320 * dpr, 600 * dpr)
 	caption_max_w = minf(cw * dpr * 0.9, 600 * dpr)
-	caption_pad_h = clampf(vmin * 0.022, 12 * dpr, 18 * dpr)
-	caption_pad_v = clampf(vmin * 0.017, 9 * dpr, 13 * dpr)
+	caption_pad_h = clampf(vmin * 0.022, 12 * ui, 18 * ui)
+	caption_pad_v = clampf(vmin * 0.017, 9 * ui, 13 * ui)
 	caption_bottom = clampf(safe_bottom + vmin * 0.04, 24 * dpr, 60 * dpr)
 	tap_bottom = maxf(safe_bottom + 6 * dpr, 10 * dpr)
 
@@ -328,3 +339,12 @@ static func _dpr() -> float:
 	if r != null:
 		best = maxf(best, float(r))
 	return best
+
+
+## The mobile UI boost, applied on touch web (phones and tablets) and 1.0 everywhere else, so
+## desktop and native are unchanged. is_touchscreen_available is the same signal the rotation gate
+## uses to decide a device is touch.
+static func _ui_boost() -> float:
+	if OS.has_feature("web") and DisplayServer.is_touchscreen_available():
+		return MOBILE_UI_BOOST
+	return 1.0

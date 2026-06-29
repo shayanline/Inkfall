@@ -183,3 +183,21 @@ func _rescale() -> void:
 			dup.content_margin_top = UIScale.card_pad_v
 			dup.content_margin_bottom = UIScale.card_pad_v
 			card.add_theme_stylebox_override("panel", dup)
+	# the bigger phone sizes can make this dense column taller than a short landscape phone, so
+	# shrink it to fit once the new sizes have settled. It stays centered and never clips.
+	call_deferred("_fit_to_height")
+
+
+## Scale the centered column down if it is taller than the screen, so nothing clips on a short
+## viewport. When it fits, the scale is 1 and the layout is untouched.
+func _fit_to_height() -> void:
+	_vbox.pivot_offset = Vector2.ZERO
+	_vbox.scale = Vector2.ONE
+	await get_tree().process_frame
+	var needed := _vbox.size.y
+	if needed <= 0.0:
+		return
+	var s := minf(1.0, size.y / needed)
+	if s < 1.0:
+		_vbox.pivot_offset = _vbox.size * 0.5
+		_vbox.scale = Vector2(s, s)
