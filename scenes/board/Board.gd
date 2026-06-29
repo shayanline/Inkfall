@@ -60,7 +60,9 @@ func _build_lighting() -> void:
 	fill.texture = LightTex.radial()
 	fill.position = Vector2(size.x * 0.5, size.y * 0.42)
 	fill.texture_scale = size.x / 256.0 * 4.5
-	fill.energy = 0.55
+	# the ambient floor: under the HDR 2D pipeline the wash crushes the midtones, so this lifts the
+	# cast off near-black. Kept broad and dim so it reads as bounce, not a second key.
+	fill.energy = 0.9
 	fill.color = Color(0.66, 0.72, 0.85) if not act.indoor else Color(0.5, 0.52, 0.6)
 	add_child(fill)
 
