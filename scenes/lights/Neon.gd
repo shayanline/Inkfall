@@ -1,26 +1,33 @@
 class_name Neon
 extends BoardLight
-## A neon sign, built as four layers so it reads as real glowing glass, not a flat coloured stroke:
-##   1. Air halo: a soft additive coloured disc behind the sign, the haze hanging in the rainy air.
-##   2. Tube: a wide Line2D running neon.gdshader, which draws a hot glass core bleeding into an
-##      exponential coloured halo (the tube's own intrinsic glow, not reliant on the screen bloom).
-##   3. Label: the sign text, glowing in the same colour, sitting over the halo.
-##   4. Spill lights: two PointLight2Ds that throw the sign's colour onto the wall, the wet floor
+## A neon sign, built as layers so it reads as real glowing glass, not a flat coloured stroke:
+##   1. Tube: a wide Line2D running neon.gdshader, which draws a hot glass core bleeding into an
+##      exponential coloured halo. The shader uses both UV.x (along the tube: end taper, bend
+##      brightening, gas discharge shimmer) and UV.y (across: core and halo). The halo follows the
+##      actual tube shape, so there is no separate sprite halo node.
+##   2. Label: the sign text, glowing in the same colour, sitting over the halo.
+##   3. Spill lights: two PointLight2Ds that throw the sign's colour onto the wall, the wet floor
 ##      and the rain (the genuine lighting), shadowless because a sign is a glow, not a key.
 ## The bloom then lifts it all a touch further.
 ##
-## Sizing: w and h are HTML legacy pixels on a 1280-wide reference. Divided by board.unit in
+## Shapes: the sign shape is data driven. The params "shape" key selects a preset ("rect", "arrow",
+## "pill", "chevron", "vertical", "circle") or pass "points" as a PackedVector2Array for any custom
+## contour. The default is "rect".
+##
+## Sizing: w and h are HTML legacy pixels on a 1280 wide reference. Divided by board.unit in
 ## place() so the board scale renders them at the correct screen size.
 ##
-## Flicker: slow 5 + 13 Hz sine, matching the legacy. One designated sign per act can have
-## dropout: true for the occasional full blackout and re-strike; the modulate dims every layer and
-## rides into the tube shader through the vertex COLOR, while the spill lights dim by energy.
+## Flicker state machine: the sign has five states (LIVE, DYING, DEAD, RE_STRIKING, BUZZ) driven by
+## story data. A slow 5 + 13 Hz sine matches the legacy. One designated sign per act can have
+## dropout: true for the occasional full blackout and re-strike. The sign also responds to fx events
+## ("power_cut" kills it, flags "neon_dead" / "neon_live" control it from the story). The
+## neon_crackle SFX fires on dropout and re-strike.
 
 const _FONT := preload("res://fonts/Oswald.ttf")
 const _LIGHT_TEX := preload("res://src/util/soft_glow.tres")
 const _NEON_SHADER := preload("res://shaders/neon.gdshader")
 const _LABEL_BASE := 24   # the label renders at this size, then scales to fit the sign box
-const _TUBE_WIDTH := 14.0 # the glow diameter of the tube in design units: wide so the shader has room to spread its halo
+const _TUBE_WIDTH := 6.0  # the glow diameter of the tube in design units: thin so it reads as glass, not a smear
 
 static var _white_tex: ImageTexture
 
@@ -40,24 +47,32 @@ var _w := 120.0
 var _h := 40.0
 
 var _label := ""
-var _arrow := false
+var _shape := "rect"
+var _custom_points: PackedVector2Array = PackedVector2Array()
 var _ignite := false
 var _dropout := false
 
 ## The two PointLight2Ds, built in place().
-var _surface_light: PointLight2D   ## sign-shaped, tight surface glow
+var _surface_light: PointLight2D   ## sign shaped, tight surface glow
 var _air_light: PointLight2D       ## wide soft air bloom
 
 var _buzz_t := 0.0
 var _buzz_on := false
 
-enum _DropState { LIVE, DARK }
-var _drop_state := _DropState.LIVE
-var _drop_timer := 0.0
+## Flicker state machine
+enum _State { LIVE, DYING, DEAD, RE_STRIKING, BUZZ }
+var _state := _State.LIVE
+var _state_timer := 0.0
 const _DROP_INTERVAL_MIN := 4.0
 const _DROP_INTERVAL_MAX := 14.0
 const _DARK_DUR_MIN := 0.08
 const _DARK_DUR_MAX := 0.30
+const _DYING_DUR := 0.12          # how long the sign takes to die
+const _RESTRIKE_DUR := 0.6        # how long the cold re-strike warm up takes
+
+## Dead flag: when set by a story flag or fx, the sign stays dark until cleared.
+var _force_dead := false
+
 
 func on_object_params(p: Dictionary) -> void:
 	super.on_object_params(p)
@@ -67,7 +82,12 @@ func on_object_params(p: Dictionary) -> void:
 		_h_px = float(p["h"])
 	if p.get("label") != null:
 		_label = str(p["label"])
-	_arrow = p.get("arrow", _arrow) == true
+	if p.get("shape") != null:
+		_shape = str(p["shape"])
+	elif p.get("arrow", false) == true:
+		_shape = "arrow"   # legacy compat: "arrow": true maps to shape "arrow"
+	if p.get("points") != null:
+		_custom_points = p["points"] as PackedVector2Array
 	_ignite = p.get("ignite", _ignite) == true
 	_dropout = p.get("dropout", _dropout) == true
 
@@ -82,14 +102,14 @@ func place() -> void:
 	var u := board.unit if board else 1.0
 	_w = _w_px / u
 	_h = _h_px / u
-	_build_halo()
 	_build_outline()
 	_build_label()
 	_build_lights()
 	if _dropout:
-		_drop_timer = randf_range(_DROP_INTERVAL_MIN, _DROP_INTERVAL_MAX)
+		_state = _State.LIVE
+		_state_timer = randf_range(_DROP_INTERVAL_MIN, _DROP_INTERVAL_MAX)
 	if _ignite:
-		# Cold start: the sign sits near-dark, then strikes after a beat and the tubes warm up.
+		# Cold start: the sign sits near dark, then strikes after a beat and the tubes warm up.
 		modulate = Color(0.15, 0.15, 0.15)
 		_set_light_energy(0.04)
 		var tw := create_tween()
@@ -100,62 +120,121 @@ func place() -> void:
 			tw.parallel().tween_property(_surface_light, "energy", _surface_energy(), 0.6)
 		if _air_light:
 			tw.parallel().tween_property(_air_light, "energy", _air_energy(), 0.6)
+		AudioDirector.neon_zap()
 	else:
 		_buzz_on = true
 
 
-# --- geometry ----------------------------------------------------------------------------------
+# --- shape presets ---------------------------------------------------------------------------
 
-## The glowing glass tube: a wide Line2D running neon.gdshader. The line is far wider than the glass
-## so the shader's across-line UV gives the distance from the centreline, from which it draws the hot
-## core and the coloured halo. default_color stays white so the flicker (node modulate) rides cleanly
-## into the shader through the vertex COLOR.
+## Return the outline points for the current shape, all in the w/h design space.
+func _outline_points() -> PackedVector2Array:
+	if not _custom_points.is_empty():
+		return _custom_points
+	match _shape:
+		"arrow":
+			var pw := _h * 0.9
+			return PackedVector2Array([
+				Vector2(0, 0), Vector2(_w, 0), Vector2(_w + pw, _h / 2.0),
+				Vector2(_w, _h), Vector2(0, _h), Vector2(0, 0)])
+		"pill":
+			# A rounded rectangle (pill shape) approximated with arcs at each short end.
+			var r := _h * 0.5
+			var pts := PackedVector2Array()
+			# top edge, left to right
+			pts.append(Vector2(r, 0))
+			pts.append(Vector2(_w - r, 0))
+			# right cap (semicircle, top to bottom)
+			for i in range(5):
+				var a := -PI / 2.0 + PI * float(i) / 4.0
+				pts.append(Vector2(_w - r + cos(a) * r, r + sin(a) * r))
+			# bottom edge, right to left
+			pts.append(Vector2(r, _h))
+			# left cap (semicircle, bottom to top)
+			for i in range(5):
+				var a := PI / 2.0 + PI * float(i) / 4.0
+				pts.append(Vector2(r + cos(a) * r, r + sin(a) * r))
+			return pts
+		"chevron":
+			var indent := _h * 0.4
+			return PackedVector2Array([
+				Vector2(0, 0), Vector2(_w, 0), Vector2(_w + indent, _h / 2.0),
+				Vector2(_w, _h), Vector2(0, _h), Vector2(indent, _h / 2.0), Vector2(0, 0)])
+		"vertical":
+			# A tall vertical banner, w and h are swapped conceptually (w = narrow, h = tall).
+			return PackedVector2Array([
+				Vector2(0, 0), Vector2(_w, 0), Vector2(_w, _h),
+				Vector2(0, _h), Vector2(0, 0)])
+		"circle":
+			var cx := _w * 0.5
+			var cy := _h * 0.5
+			var rx := _w * 0.5
+			var ry := _h * 0.5
+			var pts := PackedVector2Array()
+			var segs := 16
+			for i in range(segs + 1):
+				var a := TAU * float(i) / float(segs)
+				pts.append(Vector2(cx + cos(a) * rx, cy + sin(a) * ry))
+			return pts
+		_:  # "rect" and fallback
+			return PackedVector2Array([
+				Vector2(0, 0), Vector2(_w, 0), Vector2(_w, _h),
+				Vector2(0, _h), Vector2(0, 0)])
+
+
+# --- geometry -------------------------------------------------------------------------------
+
+## The glowing glass tube: a wide Line2D running neon.gdshader. The texture mode is STRETCH so UV.x
+## maps 0..1 along the full tube, giving the shader the along-tube position for end taper, bend
+## brightening, and the gas discharge shimmer. default_color stays white so the flicker (node
+## modulate) rides cleanly into the shader through the vertex COLOR.
 func _build_outline() -> void:
 	var tube := Line2D.new()
 	tube.name = "Outline"
 	tube.width = _TUBE_WIDTH
 	tube.default_color = Color.WHITE
 	tube.texture = _white()
-	tube.texture_mode = Line2D.LINE_TEXTURE_TILE
+	tube.texture_mode = Line2D.LINE_TEXTURE_STRETCH
 	tube.joint_mode = Line2D.LINE_JOINT_ROUND
 	tube.begin_cap_mode = Line2D.LINE_CAP_ROUND
 	tube.end_cap_mode = Line2D.LINE_CAP_ROUND
-	tube.points = _outline_points()
+	var pts := _outline_points()
+	tube.points = pts
 	var mat := ShaderMaterial.new()
 	mat.shader = _NEON_SHADER
 	mat.set_shader_parameter("glow_color", color)
+	# Feed the bend positions (as fractions of total arc length) to the shader.
+	var bends := _compute_bend_fractions(pts)
+	mat.set_shader_parameter("bend_count", float(bends.size()))
+	var bend_arr: Array[float] = []
+	for i in range(6):
+		bend_arr.append(bends[i] if i < bends.size() else 0.0)
+	mat.set_shader_parameter("bends", bend_arr)
 	tube.material = mat
+	tube.z_index = 1   # behind the label (z_index 2), above the lights
 	add_child(tube)
 
 
-## The soft coloured haze hanging in the air around the sign (the glow in space). A radial sprite,
-## additive and faint, shaped to the sign and sitting behind the tube. Distinct from the spill
-## lights: this is the visible air glow, they are what actually lights the wall and floor.
-func _build_halo() -> void:
-	var halo := Sprite2D.new()
-	halo.name = "Halo"
-	halo.texture = _LIGHT_TEX
-	halo.position = Vector2(_w * 0.5 + ((_h * 0.45) if _arrow else 0.0), _h * 0.5)
-	var tex := float(_LIGHT_TEX.get_width())
-	# scale the halo to the sign's footprint plus a comfortable margin, not the max dimension
-	var diag := sqrt(_w * _w + _h * _h)
-	halo.scale = Vector2((diag * 1.8) / tex, (diag * 1.4) / tex)
-	halo.modulate = Color(color.r, color.g, color.b, 0.35)
-	var m := CanvasItemMaterial.new()
-	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	halo.material = m
-	add_child(halo)
-
-
-func _outline_points() -> PackedVector2Array:
-	if _arrow:
-		var pw := _h * 0.9
-		return PackedVector2Array([
-			Vector2(0, 0), Vector2(_w, 0), Vector2(_w + pw, _h / 2.0),
-			Vector2(_w, _h), Vector2(0, _h), Vector2(0, 0)])
-	return PackedVector2Array([
-		Vector2(0, 0), Vector2(_w, 0), Vector2(_w, _h),
-		Vector2(0, _h), Vector2(0, 0)])
+## Compute the fractional arc-length position (0..1) of each interior bend (corner) in the outline.
+## The first and last points are the tube ends, not bends.
+func _compute_bend_fractions(pts: PackedVector2Array) -> Array[float]:
+	if pts.size() < 3:
+		return []
+	# compute cumulative arc lengths
+	var lengths: Array[float] = [0.0]
+	var total := 0.0
+	for i in range(1, pts.size()):
+		total += pts[i].distance_to(pts[i - 1])
+		lengths.append(total)
+	if total < 0.001:
+		return []
+	# interior points (skip first and last) are the bends
+	var fracs: Array[float] = []
+	for i in range(1, pts.size() - 1):
+		fracs.append(lengths[i] / total)
+		if fracs.size() >= 6:
+			break
+	return fracs
 
 
 func _build_label() -> void:
@@ -167,46 +246,89 @@ func _build_label() -> void:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", _FONT)
-	label.add_theme_color_override("font_color", color)
-	# A coloured outline fattens the letters into glowing tubes; the halo behind and the bloom do
-	# the rest, so the text reads as lit glass rather than a flat caption.
+	# The label text is the brightest part of the sign: white-hot at the centre, so the letters
+	# read as the lit glass tubes themselves, not as captions painted on top of a glow. The outline
+	# gives each letter a coloured fringe that ties it to the sign colour.
+	var hot := Color(
+		minf(color.r * 1.4 + 0.5, 1.0),
+		minf(color.g * 1.4 + 0.5, 1.0),
+		minf(color.b * 1.4 + 0.5, 1.0))
+	label.add_theme_color_override("font_color", hot)
 	label.add_theme_color_override("font_outline_color", color)
-	label.add_theme_constant_override("outline_size", 7)
+	label.add_theme_constant_override("outline_size", 4)
 	label.add_theme_font_size_override("font_size", _LABEL_BASE)
+	# Sit above the tube glow so the letters are always readable.
+	label.z_index = 2
 	add_child(label)
 	# A Control parented to a Node2D auto-sizes to its text and ignores any size we set, so instead
 	# we render the label at a fixed base size, then scale the whole label to fit inside the sign
-	# box (with a small margin) and centre it on the box. Works for any box shape, wide or tall.
+	# box (with a small margin) and centre it on the box.
 	label.reset_size()
-	var pad := 0.84
-	var s: float = minf(_w / maxf(label.size.x, 1.0), _h / maxf(label.size.y, 1.0)) * pad
-	label.scale = Vector2(s, s)
-	label.position = (Vector2(_w, _h) - label.size * s) * 0.5
+	var pad := 0.88
+	var bbox := _label_bbox()
+	var is_tall := _shape == "vertical" and _h > _w * 1.5
+	if is_tall:
+		# Vertical banner: rotate the text 90 degrees so it reads downward, then fit the rotated
+		# label (swapped width/height) into the tall narrow box.
+		label.rotation = PI / 2.0
+		var s: float = minf(bbox.x / maxf(label.size.y, 1.0), bbox.y / maxf(label.size.x, 1.0)) * pad
+		label.scale = Vector2(s, s)
+		# After a 90-degree rotation, the label's visual top-left shifts. Centre it manually:
+		# rotated, the label's visual width = original height * s, visual height = original width * s.
+		var vis_w := label.size.y * s
+		var vis_h := label.size.x * s
+		label.position = _label_centre() + Vector2(-vis_w * 0.5 + vis_h, -vis_h * 0.5)
+	else:
+		var s: float = minf(bbox.x / maxf(label.size.x, 1.0), bbox.y / maxf(label.size.y, 1.0)) * pad
+		label.scale = Vector2(s, s)
+		label.position = (_label_centre() - label.size * s * 0.5)
 
 
-# --- lights ------------------------------------------------------------------------------------
+## The bounding box the label should fit inside, accounting for shape.
+func _label_bbox() -> Vector2:
+	match _shape:
+		"arrow":
+			return Vector2(_w, _h)
+		"chevron":
+			return Vector2(_w * 0.8, _h)
+		"circle":
+			return Vector2(_w * 0.7, _h * 0.7)
+		_:
+			return Vector2(_w, _h)
+
+
+## The visual centre of the sign shape, where the label should be centred.
+func _label_centre() -> Vector2:
+	match _shape:
+		"arrow":
+			return Vector2(_w * 0.5, _h * 0.5)
+		"chevron":
+			return Vector2(_w * 0.5 + _h * 0.1, _h * 0.5)
+		"circle":
+			return Vector2(_w * 0.5, _h * 0.5)
+		_:
+			return Vector2(_w * 0.5, _h * 0.5)
+
+
+# --- lights ---------------------------------------------------------------------------------
 ## Two additive PointLight2Ds matching the HTML v2 light model:
-## surface glow (sign-shaped ellipse) and air glow (large soft disc).
+## surface glow (sign shaped ellipse) and air glow (large soft disc).
 
 func _build_lights() -> void:
-	var cx := _w / 2.0 + ((_h * 0.45) if _arrow else 0.0)
+	var cx := _shape_centre_x()
 	var cy := _h / 2.0
 
-	# Surface light: shaped to the sign's w/h ratio. The PointLight2D uses the radial texture;
-	# we squash its own scale on x to match the sign's aspect ratio.
+	# Surface light: shaped to the sign's w/h ratio.
 	_surface_light = PointLight2D.new()
 	_surface_light.texture = _LIGHT_TEX
 	_surface_light.color = color
 	_surface_light.energy = _surface_energy()
 	_surface_light.position = Vector2(cx, cy)
-	# Sign aspect: scale x to match w/h so the light pool is elliptical.
 	var aspect := _w / maxf(_h, 1.0)
-	var base_scale := maxf(_w, _h) * 1.1 / 64.0   # 64 = texture size
+	var base_scale := maxf(_w, _h) * 1.1 / 64.0
 	_surface_light.texture_scale = base_scale
 	_surface_light.scale = Vector2(aspect if aspect < 1.0 else 1.0, 1.0 if aspect < 1.0 else 1.0 / aspect)
 	_surface_light.blend_mode = Light2D.BLEND_MODE_ADD
-	# A neon sign is a glow, not a key: it spills its colour onto the wall and the wet floor but does
-	# not throw hard figure shadows (that is the lamp's job), so it stays a shadowless glow.
 	LightKit.ambient(_surface_light)
 	add_child(_surface_light)
 
@@ -216,39 +338,112 @@ func _build_lights() -> void:
 	_air_light.color = color
 	_air_light.energy = _air_energy()
 	_air_light.position = Vector2(cx, cy)
-	_air_light.texture_scale = maxf(_w, _h) * 2.6 / 64.0   # a wide coloured halo in the air
+	_air_light.texture_scale = maxf(_w, _h) * 2.6 / 64.0
 	_air_light.blend_mode = Light2D.BLEND_MODE_ADD
-	LightKit.ambient(_air_light)   # pure atmosphere, no shadows of its own
+	LightKit.ambient(_air_light)
 	add_child(_air_light)
 
-	# Keep _light (from BoardLight) pointing at the surface light for the base class flicker.
+	# Keep _light (from BoardLight) pointing at the surface light for the base class.
 	_light = _surface_light
 	_base_energy = _surface_energy()
 
 
+## The centre x of the sign shape, accounting for arrow and chevron offset.
+func _shape_centre_x() -> float:
+	match _shape:
+		"arrow":
+			return _w / 2.0 + _h * 0.45
+		"chevron":
+			return _w / 2.0 + _h * 0.2
+		_:
+			return _w / 2.0
+
+
 func _surface_energy() -> float:
-	# The tight coloured pool the sign throws on its own wall and the wet floor. Kept moderate now
-	# the tube has its own intrinsic glow, so the layers do not stack up to white.
-	return 1.4 * intensity
+	return 1.8 * intensity
 
 
 func _air_energy() -> float:
-	# The broad coloured spill of the sign onto the surroundings and the rain.
-	return 0.6 * intensity
+	return 0.8 * intensity
 
 
-# --- flicker -----------------------------------------------------------------------------------
+# --- light contribution (improvement 4) ----------------------------------------------------
+
+## Return the light contributions for the ripple and rain sampling, so Board does not need to
+## reach into this object's internals with isinstance checks. Each entry has pos (global), col,
+## radius, and energy.
+func get_light_contributions() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _surface_light:
+		out.append({
+			"pos": to_global(_surface_light.position),
+			"col": color,
+			"radius": _surface_light.texture_scale * 64.0 * maxf(_surface_light.scale.x, _surface_light.scale.y),
+			"energy": _surface_light.energy,
+		})
+	if _air_light:
+		out.append({
+			"pos": to_global(_air_light.position),
+			"col": color,
+			"radius": _air_light.texture_scale * 64.0 * 0.5,
+			"energy": _air_light.energy,
+		})
+	return out
+
+
+# --- flicker state machine ------------------------------------------------------------------
 
 func on_tick() -> void:
 	# Do not call super.on_tick(): BoardLight.on_tick() drives the single _light which we
 	# manage ourselves here. Calling super would double-flicker the surface light.
+	if _force_dead:
+		_set_brightness(0.0)
+		return
 	if not _buzz_on:
 		return
 	var dt := get_process_delta_time()
-	if _dropout:
-		_tick_dropout(dt)
-	else:
-		_apply_buzz(dt)
+	_state_timer -= dt
+	match _state:
+		_State.LIVE:
+			_apply_buzz(dt)
+			if _dropout and _state_timer <= 0.0:
+				_enter_state(_State.DYING)
+		_State.BUZZ:
+			_apply_buzz(dt)
+		_State.DYING:
+			var progress := 1.0 - maxf(_state_timer / _DYING_DUR, 0.0)
+			_set_brightness(1.0 - progress)
+			if _state_timer <= 0.0:
+				_enter_state(_State.DEAD)
+		_State.DEAD:
+			_set_brightness(0.0)
+			if _state_timer <= 0.0:
+				_enter_state(_State.RE_STRIKING)
+		_State.RE_STRIKING:
+			var progress := 1.0 - maxf(_state_timer / _RESTRIKE_DUR, 0.0)
+			# flicker on and off during re-strike for a realistic warm up
+			var flicker := 1.0 if fmod(progress * 12.0, 1.0) > 0.3 else 0.15
+			_set_brightness(progress * flicker)
+			if _state_timer <= 0.0:
+				_enter_state(_State.LIVE)
+				AudioDirector.neon_zap()
+
+
+func _enter_state(new_state: _State) -> void:
+	_state = new_state
+	match new_state:
+		_State.DYING:
+			_state_timer = _DYING_DUR
+			AudioDirector.neon_zap()
+		_State.DEAD:
+			_state_timer = randf_range(_DARK_DUR_MIN, _DARK_DUR_MAX)
+		_State.RE_STRIKING:
+			_state_timer = _RESTRIKE_DUR
+		_State.LIVE:
+			_state_timer = randf_range(_DROP_INTERVAL_MIN, _DROP_INTERVAL_MAX)
+			_buzz_t = 0.0
+		_State.BUZZ:
+			_state_timer = 0.0
 
 
 func _apply_buzz(dt: float) -> void:
@@ -261,22 +456,48 @@ func _apply_buzz(dt: float) -> void:
 	_set_brightness(f)
 
 
-func _tick_dropout(dt: float) -> void:
-	_drop_timer -= dt
-	match _drop_state:
-		_DropState.LIVE:
-			_apply_buzz(dt)
-			if _drop_timer <= 0.0:
-				_drop_state = _DropState.DARK
-				_drop_timer = randf_range(_DARK_DUR_MIN, _DARK_DUR_MAX)
-				_set_brightness(0.0)
-		_DropState.DARK:
-			if _drop_timer <= 0.0:
-				_drop_state = _DropState.LIVE
-				_drop_timer = randf_range(_DROP_INTERVAL_MIN, _DROP_INTERVAL_MAX)
-				_buzz_t = 0.0
-				_set_brightness(1.0)
+# --- story reactivity -----------------------------------------------------------------------
 
+## React to story fx events: "power_cut" kills the sign, other fx that story authors invent.
+func on_fx(event: String) -> void:
+	super.on_fx(event)
+	if event == "power_cut":
+		_force_dead = true
+		_set_brightness(0.0)
+		AudioDirector.neon_zap()
+
+
+## React to flag changes on each line advance. "neon_dead" forces the sign dark, "neon_live"
+## re-strikes it. This lets the story author kill and revive neons per line.
+func on_line(idx: int) -> void:
+	super.on_line(idx)
+	if board == null:
+		return
+	if board.flags.get("neon_dead", false) and not _force_dead:
+		_force_dead = true
+		_set_brightness(0.0)
+		AudioDirector.neon_zap()
+	elif board.flags.get("neon_live", false) and _force_dead:
+		_force_dead = false
+		_cold_restrike()
+
+
+## Trigger a cold re-strike from dead: the sign warms up over _RESTRIKE_DUR.
+func _cold_restrike() -> void:
+	modulate = Color(0.15, 0.15, 0.15)
+	_set_light_energy(0.04)
+	_buzz_on = true
+	AudioDirector.neon_zap()
+	var tw := create_tween()
+	tw.tween_property(self, "modulate", Color.WHITE, _RESTRIKE_DUR)
+	if _surface_light:
+		tw.parallel().tween_property(_surface_light, "energy", _surface_energy(), _RESTRIKE_DUR)
+	if _air_light:
+		tw.parallel().tween_property(_air_light, "energy", _air_energy(), _RESTRIKE_DUR)
+	_enter_state(_State.BUZZ)
+
+
+# --- brightness control ---------------------------------------------------------------------
 
 func _set_brightness(f: float) -> void:
 	modulate = Color(f, f, f)

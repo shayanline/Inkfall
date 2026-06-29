@@ -134,9 +134,9 @@ func _hallucination() -> Dictionary:
 				},
 				"lights": [
 					{"type": "lamp", "x": 0.30, "intensity": 1, "flicker": true, "par": 0.5},
-					{"type": "neon", "x": 0.10, "y": 0.52, "w": 92, "h": 34, "color": Color("ff0018"), "label": "BAR", "seed": 1.3},
+					{"type": "neon", "x": 0.10, "y": 0.52, "w": 92, "h": 34, "color": Color("ff0018"), "label": "BAR", "shape": "pill", "seed": 1.3},
 					{"type": "neon", "x": 0.40, "y": 0.48, "w": 120, "h": 30, "color": Color("ff0018"), "label": "GIRLS", "seed": 2.7, "par": 0.4, "dropout": true},
-					{"type": "neon", "x": 0.66, "y": 0.40, "w": 44, "h": 120, "color": Color("ffd400"), "label": "XXX", "seed": 4.1},
+					{"type": "neon", "x": 0.66, "y": 0.40, "w": 44, "h": 120, "color": Color("ffd400"), "label": "XXX", "shape": "vertical", "seed": 4.1},
 				],
 				"cast": [
 					{"type": "steam", "x": 0.52, "seed": 0.3},
@@ -156,7 +156,7 @@ func _hallucination() -> Dictionary:
 				"title": "THE ALLEY", "ground": 0.8, "key_light": {"x": 0.74, "y": 0.3}, "moon": {"x": 0.5, "y": 0.11}, "rain_vol": 0.16,
 				"backdrop": {"type": "alley", "seed": 77123},
 				"lights": [
-					{"type": "neon", "x": 0.72, "y": 0.24, "w": 64, "h": 34, "color": Color("ff0018"), "label": "EAT", "seed": 5.2, "par": 0.3, "arrow": true, "ignite": true},
+					{"type": "neon", "x": 0.72, "y": 0.24, "w": 64, "h": 34, "color": Color("ff0018"), "label": "EAT", "seed": 5.2, "par": 0.3, "shape": "arrow", "ignite": true},
 				],
 				"cast": [
 					{"type": "dumpster", "x": 0.11, "scale": 1, "par": 0.4},
@@ -222,8 +222,8 @@ func _danny() -> Dictionary:
 				},
 				"lights": [
 					{"type": "lamp", "x": 0.30, "intensity": 1, "flicker": true, "par": 0.5},
-					{"type": "neon", "x": 0.10, "y": 0.40, "w": 130, "h": 34, "color": Color("ff0018"), "label": "CASINO", "seed": 1.3},
-					{"type": "neon", "x": 0.70, "y": 0.28, "w": 44, "h": 118, "color": Color("ffd400"), "label": "LUCK", "seed": 4.1},
+					{"type": "neon", "x": 0.10, "y": 0.40, "w": 130, "h": 34, "color": Color("ff0018"), "label": "CASINO", "shape": "chevron", "seed": 1.3},
+					{"type": "neon", "x": 0.70, "y": 0.28, "w": 44, "h": 118, "color": Color("ffd400"), "label": "LUCK", "shape": "vertical", "seed": 4.1},
 				],
 				"cast": [
 					{"type": "steam", "x": 0.52, "seed": 0.3},
@@ -245,7 +245,7 @@ func _danny() -> Dictionary:
 				"backdrop": {"type": "room", "wall": "#06070b", "wall_top": "#0b0d12", "door": 0.64},
 				"lights": [
 					{"type": "bulb", "x": 0.45, "y": 0.30, "intensity": 1, "flicker": true, "par": 0.2},
-					{"type": "neon", "x": 0.14, "y": 0.20, "w": 120, "h": 30, "color": Color("ff0018"), "label": "FORTUNE", "seed": 2.2, "par": 0.2},
+					{"type": "neon", "x": 0.14, "y": 0.20, "w": 120, "h": 30, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 2.2, "par": 0.2},
 				],
 				"cast": [
 					{"type": "rouletteWheel", "x": 0.20, "y": 0.74, "scale": 0.8, "par": 0.2},
@@ -289,7 +289,7 @@ func _danny() -> Dictionary:
 				"backdrop": {"type": "alley", "seed": 44021},
 				"lights": [
 					{"type": "bulb", "x": 0.5, "y": 0.3, "intensity": 1, "flicker": true, "par": 0.3},
-					{"type": "neon", "x": 0.47, "y": 0.42, "w": 52, "h": 22, "color": Color("ff0018"), "label": "EAT", "seed": 3.3, "par": 0.3},
+					{"type": "neon", "x": 0.47, "y": 0.42, "w": 52, "h": 22, "color": Color("ff0018"), "label": "EAT", "shape": "pill", "seed": 3.3, "par": 0.3},
 				],
 				"cast": [
 					{"type": "steam", "x": 0.40, "seed": 0.9},

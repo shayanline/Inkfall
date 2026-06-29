@@ -175,11 +175,16 @@ func _spawn(p: Placement, base_z: int) -> BoardObject:
 	return obj
 
 
-## Gather all PointLight2D positions, colours and radii for ripple light sampling.
+## Gather all light positions, colours and radii for ripple light sampling. BoardLight subclasses
+## (Lamp, Neon, Bulb) report their own contributions through get_light_contributions(), so this
+## method does not need to reach into each fixture's internals. Bare PointLight2Ds (the key, the
+## moon, the fill) are collected directly.
 func _collect_lights() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for child in get_children():
-		if child is PointLight2D:
+		if child is BoardLight:
+			out.append_array((child as BoardLight).get_light_contributions())
+		elif child is PointLight2D:
 			var L: PointLight2D = child
 			out.append({
 				"pos": L.position,
@@ -187,26 +192,6 @@ func _collect_lights() -> Array[Dictionary]:
 				"radius": L.texture_scale * 128.0,
 				"energy": L.energy,
 			})
-		elif child is Neon:
-			# Neons have two PointLight2Ds; use the air light for the broad influence radius.
-			var n: Neon = child
-			var light := n._air_light if n._air_light else n._surface_light
-			if light:
-				out.append({
-					"pos": n.to_global(light.position),
-					"col": n.color,
-					"radius": light.texture_scale * 64.0 * 0.5,
-					"energy": light.energy,
-				})
-		elif child is BoardLight:
-			var bl: BoardLight = child
-			if bl._light:
-				out.append({
-					"pos": bl.global_position + bl._light.position,
-					"col": bl._light.color,
-					"radius": bl._light.texture_scale * 128.0,
-					"energy": bl._light.energy,
-				})
 	return out
 
 

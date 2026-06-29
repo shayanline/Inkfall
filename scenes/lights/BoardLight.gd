@@ -43,6 +43,19 @@ func _find_light(n: Node) -> PointLight2D:
 	return null
 
 
+## Return this fixture's light contributions for the ripple and rain colour sampling. Each entry
+## has pos (global), col, radius, and energy. Subclasses with multiple lights (Neon) override this.
+func get_light_contributions() -> Array[Dictionary]:
+	if _light == null:
+		return []
+	return [{
+		"pos": global_position + _light.position,
+		"col": _light.color,
+		"radius": _light.texture_scale * 128.0,
+		"energy": _light.energy,
+	}]
+
+
 func on_tick() -> void:
 	if _light == null or not flicker:
 		return
