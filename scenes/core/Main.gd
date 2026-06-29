@@ -358,23 +358,39 @@ func _on_poster_requested() -> void:
 		return
 	_hud.visible = false
 	await RenderingServer.frame_post_draw
-	var frame := get_viewport().get_texture().get_image()
+	# crop the grab to the scene the viewer sees (the board area), dropping any letterbox bars, so
+	# the poster shows the live frame, not the screen, and reads the same whatever the device shape
+	var frame := _crop_to_scene(get_viewport().get_texture().get_image())
 	_hud.visible = true
-	# the modal shows the clean pulled frame, SAVE writes the composed poster
-	var frame_tex := ImageTexture.create_from_image(frame)
-	var save_img := await _compose_poster(frame)
-	_hud.show_poster(frame_tex, save_img)
+	# preview exactly what gets saved: the composed poster, watermark and narration baked in
+	var poster := await _compose_poster(frame)
+	_hud.show_poster(ImageTexture.create_from_image(poster), poster)
 
 
-## compose a downloadable noir poster from the captured frame: an inked white border, the INKFALL
+## Crop a full viewport grab down to the staged scene (UIScale.content_rect), so the poster carries
+## the board the viewer is looking at and never the letterbox bars around it.
+func _crop_to_scene(shot: Image) -> Image:
+	var r := UIScale.content_rect
+	var full := Rect2i(Vector2i.ZERO, shot.get_size())
+	var region := Rect2i(int(r.position.x), int(r.position.y), int(r.size.x), int(r.size.y)).intersection(full)
+	if region.has_area() and region != full:
+		return shot.get_region(region)
+	return shot
+
+
+## The poster's scene frame aspect. Fixed so the saved poster is the same shape on every device; the
+## live scene is cover fitted into it (filled, centre kept), standardising the output.
+const POSTER_FRAME_AR := 16.0 / 9.0
+
+
+## compose a downloadable poster from the captured scene: an inked white border, the INKFALL
 ## wordmark, the current caption as the tagline, and a footer. Built in a SubViewport so it uses the
-## shared fonts and renders to a saveable image.
+## shared fonts and renders to a saveable image. The output is a fixed size regardless of device.
 func _compose_poster(frame: Image) -> Image:
 	var pw := 900
 	var margin := 56
 	var fw := pw - margin * 2
-	var vp := get_viewport_rect().size
-	var fh := int(fw * vp.y / vp.x)
+	var fh := int(fw / POSTER_FRAME_AR)
 	var fy := 190
 	var ph := fy + fh + 160
 
@@ -398,8 +414,8 @@ func _compose_poster(frame: Image) -> Image:
 	title.alignment = BoxContainer.ALIGNMENT_CENTER
 	title.add_theme_constant_override("separation", 0)
 	root.add_child(title)
-	title.add_child(_poster_word("NO", Color(1, 1, 1, 1)))
-	title.add_child(_poster_word("IR", Color(0.882, 0, 0.063, 1)))
+	title.add_child(_poster_word("INK", Color(1, 1, 1, 1)))
+	title.add_child(_poster_word("FALL", Color(0.882, 0, 0.063, 1)))
 
 	var pic := TextureRect.new()
 	pic.texture = ImageTexture.create_from_image(frame)

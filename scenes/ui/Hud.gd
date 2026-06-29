@@ -44,7 +44,6 @@ var _menu_views := {}
 var _sound_btn: Button
 var _poster: Control
 var _poster_img: TextureRect
-var _poster_cap: Label
 var _poster_save: Button
 
 var _titles: Array = []
@@ -455,13 +454,14 @@ func _build_poster() -> void:
 	panel.theme_type_variation = &"MenuPanel"
 	pad.add_child(panel)
 
+	# the poster preview is the hero: it already carries the INKFALL wordmark and the narration, so
+	# the modal adds no title or caption of its own, just the image and the save and close actions
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_theme_constant_override("separation", 16)
 	panel.add_child(col)
-	col.add_child(_menu_title("POSTER"))
 
-	# the pulled frame, matted in a crisp bordered frame
+	# the composed poster, matted in a crisp bordered frame
 	var mat := PanelContainer.new()
 	mat.theme_type_variation = &"PosterFrame"
 	mat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -470,14 +470,6 @@ func _build_poster() -> void:
 	_poster_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_poster_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	mat.add_child(_poster_img)
-
-	_poster_cap = Label.new()
-	_poster_cap.theme_type_variation = &"MenuNote"
-	_poster_cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_poster_cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(_poster_cap)
-
-	col.add_child(_sep())
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -593,26 +585,20 @@ func resume_from_end() -> void:
 		set_tap_visible(true)
 
 
-## tex is the clean pulled frame shown in the modal, image is the composed poster written on SAVE.
+## tex and image are the same composed poster: tex previews it, image is written on SAVE. The
+## preview fills most of the screen so the viewer can judge it before saving, then leaves room for
+## the save and close row.
 func show_poster(tex: Texture2D, image: Image) -> void:
 	_poster_image = image
 	_poster_img.texture = tex
 	var ts := tex.get_size()
-	var h := 420.0
+	var vp := get_viewport_rect().size
+	var h := clampf(minf(vp.x * 0.6, vp.y * 0.6), 280.0, 900.0)
 	_poster_img.custom_minimum_size = Vector2(h * ts.x / maxf(ts.y, 1.0), h)
-	_poster_cap.text = _poster_caption()
 	_poster_save.text = "SAVE"
 	_poster_save.disabled = false
 	_poster.visible = true
 	pause_changed.emit(true)
-
-
-func _poster_caption() -> String:
-	var line := GameState.current_line()
-	var s := line.text if line else ""
-	if s == "" and GameState.story:
-		s = GameState.story.subtitle
-	return s.replace("<b>", "").replace("</b>", "")
 
 
 # --- act picker ----------------------------------------------------------
