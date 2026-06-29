@@ -61,6 +61,8 @@ func _to_story(d: Dictionary) -> Story:
 	s.title = d.get("title", "")
 	s.subtitle = d.get("subtitle", "")
 	s.blurb = d.get("blurb", "")
+	s.picker_name = d.get("picker_name", "")
+	s.picker_tagline = d.get("picker_tagline", "")
 	s.music = d.get("music", "")
 	s.music_vol = d.get("music_vol", 0.5)
 	for sc in d.get("scenes", []):
@@ -114,11 +116,13 @@ func _hallucination() -> Dictionary:
 		"title": "INKFALL",
 		"subtitle": "A HALLUCINATION OF SIN CITY",
 		"blurb": "It always rains in Basin City. The whole town is black and white, except the things that bleed. Tap through the long, wet night.",
+		"picker_name": "STORY 0",
+		"picker_tagline": "A HALLUCINATION",
 		"music": "piano_noir",
 		"music_vol": 0.62,
 		"scenes": [
 			{
-				"title": "THE STREET", "ground": 0.8, "key_light": {"x": 0.30, "y": 0.5},
+				"title": "THE STREET", "ground": 0.8, "key_light": {"x": 0.30, "y": 0.5}, "moon": {"x": 0.78, "y": 0.18},
 				"ambience": "street", "ambience_vol": 0.4, "rain_vol": 0.16,
 				"backdrop": {
 					"type": "skyline", "seed": 1977,
@@ -201,11 +205,13 @@ func _danny() -> Dictionary:
 		"title": "INKFALL",
 		"subtitle": "THE LAST DEAL OF DANNY COLE",
 		"blurb": "A small man with a big debt goes looking for easy money in the underground casinos of Basin City. The house always wins. Tap through his last bad night.",
+		"picker_name": "STORY 1",
+		"picker_tagline": "THE LAST DEAL OF DANNY COLE",
 		"music": "sad_jazz",
 		"music_vol": 0.5,
 		"scenes": [
 			{
-				"title": "THE ITCH", "ground": 0.8, "key_light": {"x": 0.3, "y": 0.5}, "ambience": "street", "ambience_vol": 0.4, "rain_vol": 0.16,
+				"title": "THE ITCH", "ground": 0.8, "key_light": {"x": 0.3, "y": 0.5}, "moon": {"x": 0.78, "y": 0.18}, "ambience": "street", "ambience_vol": 0.4, "rain_vol": 0.16,
 				"backdrop": {
 					"type": "skyline", "seed": 19880420,
 					"layers": [
@@ -279,7 +285,7 @@ func _danny() -> Dictionary:
 				],
 			},
 			{
-				"title": "THE ACCIDENT", "ground": 0.8, "key_light": {"x": 0.5, "y": 0.3}, "rain_vol": 0.16,
+				"title": "THE ACCIDENT", "ground": 0.8, "key_light": {"x": 0.5, "y": 0.3}, "moon": {"x": 0.78, "y": 0.18}, "rain_vol": 0.16,
 				"backdrop": {"type": "alley", "seed": 44021},
 				"lights": [
 					{"type": "bulb", "x": 0.5, "y": 0.3, "intensity": 1, "flicker": true, "par": 0.3},
@@ -305,7 +311,7 @@ func _danny() -> Dictionary:
 				],
 			},
 			{
-				"title": "THE RECKONING", "ground": 0.8, "key_light": {"x": 0.7, "y": 0.4}, "rain_vol": 0.16,
+				"title": "THE RECKONING", "ground": 0.8, "key_light": {"x": 0.7, "y": 0.4}, "moon": {"x": 0.78, "y": 0.18}, "rain_vol": 0.16,
 				"backdrop": {
 					"type": "skyline", "seed": 90218,
 					"layers": [

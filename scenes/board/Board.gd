@@ -68,7 +68,7 @@ func _build_sky() -> void:
 	var sky: NightSky = NIGHTSKY_SCENE.instantiate()
 	sky.area = size
 	sky.ground_y = ground_y
-	sky.has_moon = act.has_moon      # only the acts the story places a moon on (matches the original)
+	sky.has_moon = act.has_moon      # per-act: each act decides whether it shows a moon, and where
 	sky.show_clouds = _is_rooftop()  # clouds only on the rooftop
 	sky.moon_px = _moon_px
 	sky.z_index = -150

@@ -24,6 +24,7 @@ const _GLOW_COL := Color(0.72, 0.8, 0.98)
 const MOON_TEX := preload("res://art/sky/moon.png")
 const CLOUD_TEX := preload("res://art/sky/cloud.png")
 const RADIAL := preload("res://src/util/light_radial.tres")
+const MOON_SHADER := preload("res://shaders/moon.gdshader")
 
 var _stars: Array[Vector2] = []
 var _cloud: Sprite2D
@@ -75,23 +76,28 @@ func _build_gradient() -> void:
 	add_child(sky)
 
 
-## The moon: a soft glow behind, then the pixel-art disc on top, lifted so it stays bright.
+## The moon: a faint glow ring behind, then the pixel-art disc on top. The glow is kept small and
+## dim, and the disc is drawn over it, so the disc reads crisply and the glow never washes it out.
 func _build_moon() -> void:
-	var diam := area.y * 0.094
+	# near native size so the craters are not downscaled away
+	var diam := area.y * 0.13
 	var glow := Sprite2D.new()
 	glow.texture = RADIAL
 	glow.position = moon_px
-	glow.scale = Vector2(diam * 2.6 / 256.0, diam * 2.6 / 256.0)
-	glow.modulate = Color(_GLOW_COL.r, _GLOW_COL.g, _GLOW_COL.b, 0.35)
+	glow.scale = Vector2(diam * 1.7 / 256.0, diam * 1.7 / 256.0)
+	glow.modulate = Color(_GLOW_COL.r, _GLOW_COL.g, _GLOW_COL.b, 0.22)
 	glow.material = _additive()
 	glow.z_index = 1
 	add_child(glow)
 
 	var disc := Sprite2D.new()
 	disc.texture = MOON_TEX
+	disc.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST   # crisp pixels, no blur over the craters
 	disc.position = moon_px
 	disc.scale = Vector2(diam / MOON_TEX.get_width(), diam / MOON_TEX.get_width())
-	disc.modulate = Color(1.42, 1.45, 1.5)   # lifted to stay bright under the wash, keeps its blue detail
+	# a shader deepens the maria so the craters survive the screen-space desaturate
+	disc.material = ShaderMaterial.new()
+	disc.material.shader = MOON_SHADER
 	disc.z_index = 2
 	add_child(disc)
 

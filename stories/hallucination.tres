@@ -197,6 +197,7 @@ fx = PackedStringArray("lighter")
 script = ExtResource("1_2f1d4")
 title = "THE STREET"
 key_light = Vector2(0.3, 0.5)
+has_moon = true
 ambience = "street"
 backdrop = SubResource("Resource_isnjo")
 lights = Array[ExtResource("3_yy1ee")]([SubResource("Resource_q21wl"), SubResource("Resource_6a7aj"), SubResource("Resource_lsvp8"), SubResource("Resource_ad6dh")])
