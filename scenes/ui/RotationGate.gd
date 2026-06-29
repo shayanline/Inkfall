@@ -124,6 +124,8 @@ func _show_overlay() -> void:
 	_msg_fs.visible = not no_fs
 	_msg_nofs.visible = no_fs
 	_btn_rotate.visible = not no_fs
+	# the visible message and buttons differ from layout time, so re-fit to the actual content
+	call_deferred("_fit_to_viewport")
 	if visible:
 		return
 	visible = true
@@ -190,8 +192,9 @@ func _rescale() -> void:
 	_msg_nofs.add_theme_font_size_override("font_size", UIScale.fs_body)
 	_btn_rotate.add_theme_font_size_override("font_size", UIScale.fs_menu)
 	_btn_skip.add_theme_font_size_override("font_size", UIScale.fs_menu)
-	# scale the phone icon proportionally, with the same orientation compensation as the gate text
-	var icon_sz := clampf(UIScale.vmin * 0.12, 64.0 * UIScale.dpr, 118.0 * UIScale.dpr) * UIScale.ui_comp
+	# scale the phone icon proportionally, with the same orientation compensation as the gate text.
+	# It reads as a heading next to the prompt, so it is sized larger than the legacy hint glyph.
+	var icon_sz := clampf(UIScale.vmin * 0.22, 130.0 * UIScale.dpr, 200.0 * UIScale.dpr) * UIScale.ui_comp
 	_phone_icon.custom_minimum_size = Vector2(icon_sz, icon_sz)
 	_vbox.add_theme_constant_override("separation", roundi(UIScale.vmin * 0.03 * UIScale.ui_comp))
 	# gate button padding. Duplicate from the theme base (not the resolved stylebox, which is our
@@ -212,7 +215,7 @@ func _rescale() -> void:
 
 ## Scale the centered column to sit within the viewport with a margin on every side, so the text and
 ## buttons keep clear of the screen edges and never overflow. Untouched when it already fits.
-const _FIT_MARGIN := 0.9
+const _FIT_MARGIN := 0.8
 
 func _fit_to_viewport() -> void:
 	_vbox.pivot_offset = Vector2.ZERO

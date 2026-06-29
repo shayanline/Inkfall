@@ -115,7 +115,10 @@ func _build_caption() -> void:
 	_cap_vp.add_child(_caption)
 	_caption_label = RichTextLabel.new()
 	_caption_label.bbcode_enabled = true
-	_caption_label.fit_content = true
+	# fit_content is off on purpose: with it on, RichTextLabel ignores the width cap and lays a long
+	# line out in one row (running off the screen). Instead the width is pinned and the size is set
+	# from the measured wrapped content in _hug_caption.
+	_caption_label.fit_content = false
 	_caption_label.scroll_active = false
 	_caption_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_caption_label.custom_minimum_size = Vector2(560, 0)
@@ -131,6 +134,10 @@ func _build_caption() -> void:
 	_cap_tex.texture = _cap_vp.get_texture()
 	_cap_tex.material = _cap_mat
 	_cap_tex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	# ignore the texture's own size (it is rendered at 2x for crispness): present it at the logical
+	# size below, otherwise the rect grows to the 2x backing and the caption runs off the screen
+	_cap_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_cap_tex.stretch_mode = TextureRect.STRETCH_SCALE
 	_cap_tex.custom_minimum_size = Vector2(_CAP_VP)
 	_cap_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cap_tex.anchor_left = 0.5
@@ -536,9 +543,26 @@ func show_caption(text: String) -> void:
 
 
 func _apply_caption(bb: String, variant: int, seed: float) -> void:
+	# pin to the wrap width so the text wraps, then _hug_caption sizes the box to the wrapped content
+	_caption_label.custom_minimum_size = Vector2(UIScale.caption_max_w, 0)
+	_caption_label.custom_maximum_size.x = UIScale.caption_max_w
 	_caption_label.text = bb
 	_cap_mat.set_shader_parameter("variant", variant)
 	_cap_mat.set_shader_parameter("seed", seed)
+	call_deferred("_hug_caption")
+
+
+## Size the caption box to the measured wrapped content: the width hugs the longest line (within the
+## min and max) and the height fits all the lines, so a short line sits in a tight card while a long
+## line wraps at the max width instead of running off the screen.
+func _hug_caption() -> void:
+	await get_tree().process_frame
+	if not is_instance_valid(_caption_label):
+		return
+	var w := clampf(_caption_label.get_content_width(), UIScale.caption_min_w, UIScale.caption_max_w)
+	var h := _caption_label.get_content_height()
+	_caption_label.custom_minimum_size = Vector2(w, h)
+	_caption_label.custom_maximum_size.x = w
 
 
 func _set_cap_reveal(v: float) -> void:
@@ -747,8 +771,11 @@ func _rescale() -> void:
 	_cap_tex.custom_minimum_size = Vector2(cap_w, _CAP_VP.y)
 	_caption_label.add_theme_font_size_override("normal_font_size", UIScale.fs_caption)
 	_caption_label.add_theme_font_size_override("bold_font_size", UIScale.fs_caption)
-	_caption_label.custom_minimum_size.x = UIScale.caption_min_w
+	# pin to the wrap width, then re-hug to the content so the box fits the new size without overflow
+	_caption_label.custom_minimum_size.x = UIScale.caption_max_w
 	_caption_label.custom_maximum_size.x = UIScale.caption_max_w
+	if _cap_shown:
+		call_deferred("_hug_caption")
 	_cap_tex.offset_bottom = -UIScale.caption_bottom
 	# scale the caption panel padding to match the legacy clamp. Duplicate from the theme base (not
 	# the resolved stylebox, which is our own override after the first pass) so the border width,

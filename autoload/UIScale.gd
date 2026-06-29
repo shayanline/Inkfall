@@ -169,13 +169,14 @@ func _recompute() -> void:
 	var fit := minf(win.x / 1920.0, win.y / 1080.0) if win.x > 0.0 and win.y > 0.0 else 1.0
 	# full compensation, both directions: the fit factor is below 1 in portrait and above 1 in
 	# landscape, so the same font reads small in portrait and big in landscape. Dividing by it makes
-	# the perceived size the same in either orientation. Applied to the start screen, gate, title
-	# cards and caption (seen across orientations), not the HUD chrome (only seen in landscape, and
-	# already the right size). Touch web only, so desktop and native are untouched.
+	# the perceived size the same in either orientation. Applied to everything that scales with ui
+	# (the HUD chips too, which otherwise come out oversized on a tall phone in landscape). Only the
+	# pause menu stays out of this (it scales on dpr in the theme). Touch web only, so desktop and
+	# native are untouched.
 	var comp := (1.0 / clampf(fit, 0.45, 1.6)) if boost else 1.0
 	ui_comp = comp
-	var ui := dpr * (MOBILE_UI_BOOST if boost else 1.0)           # HUD chrome: chips, scene tag, tap note
-	var ui_s := ui * comp                                        # start screen and gate, orientation consistent
+	var ui := dpr * (MOBILE_UI_BOOST if boost else 1.0) * comp     # HUD chrome and general UI
+	var ui_s := ui                                               # start screen and gate (same scale as the HUD)
 	var ui_title := dpr * (TITLE_BOOST if boost else 1.0) * comp  # the big act and end title cards
 	var ui_cap := dpr * (CAPTION_BOOST if boost else 1.0) * comp  # the narration caption
 	var vw := vp.x / dpr
@@ -235,7 +236,7 @@ func _recompute() -> void:
 	tales_gap = _clamp_i(roundi(12 * dpr), vmin * 0.02, roundi(18 * dpr))
 	card_sep = _clamp_i(roundi(6 * dpr), vmin * 0.012, roundi(10 * dpr))
 	caption_min_w = clampf(cw * dpr * 0.18, 180 * dpr, 380 * dpr)
-	caption_max_w = minf(cw * dpr * 0.9, 600 * dpr)
+	caption_max_w = minf(minf(cw * dpr * 0.9, 600 * dpr), vp.x * 0.86)
 	caption_pad_h = clampf(vmin * 0.011, 7 * ui_cap, 11 * ui_cap)
 	caption_pad_v = clampf(vmin * 0.0085, 5 * ui_cap, 8 * ui_cap)
 	caption_bottom = clampf(safe_bottom + vmin * 0.04, 24 * dpr, 60 * dpr)
