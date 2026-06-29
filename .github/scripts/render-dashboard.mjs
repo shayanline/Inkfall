@@ -227,23 +227,24 @@ ${rows}
   </main>
   <script>
     (function () {
+      if (typeof Intl === 'undefined' || typeof Intl.RelativeTimeFormat !== 'function') return;
       var rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
       var units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
       function ago(date) {
         var diff = (date.getTime() - Date.now()) / 1000;
         for (var i = 0; i < units.length; i++) {
-          if (Math.abs(diff) >= units[i][1]) return rtf.format(Math.round(diff / units[i][1]), units[i][0]);
+          if (Math.abs(diff) >= units[i][1]) return rtf.format(Math.trunc(diff / units[i][1]), units[i][0]);
         }
-        return rtf.format(Math.round(diff), 'second');
+        return rtf.format(Math.trunc(diff), 'second');
       }
       function render() {
         var cells = document.querySelectorAll('.updated[data-utc]');
         for (var i = 0; i < cells.length; i++) {
           var raw = cells[i].getAttribute('data-utc').replace(' ', 'T');
-          var date = new Date(/T\d\d:\d\d:\d\d/.test(raw) ? raw + 'Z' : raw + ':00Z');
+          var date = new Date(/T\\d\\d:\\d\\d:\\d\\d/.test(raw) ? raw + 'Z' : raw + ':00Z');
           if (isNaN(date.getTime())) continue;
           cells[i].textContent = ago(date);
-          cells[i].title = date.toLocaleString();
+          cells[i].title = date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
       }
       render();
