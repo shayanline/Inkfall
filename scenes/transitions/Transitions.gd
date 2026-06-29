@@ -60,6 +60,7 @@ func show_card(title: String, hold := -1.0, last := true) -> void:
 	_card_slot = 1 - _card_slot
 	var cur := _cards[_card_slot]
 	cur.text = title
+	_fit_label(cur, UIScale.fs_card, 0.32)
 	cur.modulate.a = 0.0
 	# crossfade: fade out the previous card (fire and forget) while fading in the new one
 	if prev.modulate.a > 0.0:
@@ -101,15 +102,27 @@ func clear() -> void:
 const _OSWALD := preload("res://fonts/Oswald.ttf")
 
 
-## Apply responsive font sizes from UIScale, plus letter spacing proportional to the size so the
-## big act titles read with the legacy's wide tracking (0.32em on the cards, 0.42em on THE END)
-## rather than cramped.
+## Apply responsive font sizes from UIScale, with letter spacing proportional to the size so the big
+## titles read with the legacy's wide tracking (0.32em on the cards, 0.42em on THE END), and shrink
+## to fit the width so a long title (a story subtitle) never clips, the way the legacy card did.
 func _rescale() -> void:
 	for c in _cards:
-		c.add_theme_font_size_override("font_size", UIScale.fs_card)
-		c.add_theme_font_override("font", _spaced(roundi(UIScale.fs_card * 0.32)))
-	_end.add_theme_font_size_override("font_size", UIScale.fs_end)
-	_end.add_theme_font_override("font", _spaced(roundi(UIScale.fs_end * 0.42)))
+		_fit_label(c, UIScale.fs_card, 0.32)
+	_fit_label(_end, UIScale.fs_end, 0.42)
+
+
+## Size the label to `base_size`, but step it down until the text fits ~88% of the viewport width,
+## keeping the letter spacing at `em` of the chosen size.
+func _fit_label(label: Label, base_size: int, em: float) -> void:
+	var max_w := get_viewport().get_visible_rect().size.x * 0.88
+	var fs := base_size
+	var fv := _spaced(roundi(fs * em))
+	while fs > 14 and label.text != "" and max_w > 0.0 \
+			and fv.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > max_w:
+		fs -= 2
+		fv = _spaced(roundi(fs * em))
+	label.add_theme_font_override("font", fv)
+	label.add_theme_font_size_override("font_size", fs)
 
 
 func _spaced(spacing: int) -> FontVariation:

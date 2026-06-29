@@ -29,10 +29,14 @@ signal scale_changed
 const ASPECT_MIN := 16.0 / 10.0   # 1.6
 const ASPECT_MAX := 21.0 / 9.0    # 2.333
 
-## Extra multiplier applied to text and touch target sizes on phones (touch web), on top of dpr.
-## The legacy sizes are calibrated for a desktop CSS viewport and read small on a phone, so this
-## lifts them to a comfortable size. Raise it for bigger UI, lower it toward 1.0 for smaller.
-const MOBILE_UI_BOOST := 1.4
+## Extra multipliers applied to sizes on phones (touch web), on top of dpr, since the legacy sizes
+## are calibrated for a desktop CSS viewport and read small on a phone. Split by role: the big
+## display titles want more, the narration caption wants less (it was reading too large), the rest
+## sit in between. The pause menu is deliberately not boosted (it scales with dpr only and looks
+## right). All are 1.0 off touch web, so desktop and native are unchanged. Tune these to taste.
+const MOBILE_UI_BOOST := 1.6    ## general HUD, start screen, gate, chips
+const TITLE_BOOST := 1.9        ## the big display titles: wordmark, act cards, THE END
+const CAPTION_BOOST := 1.15     ## the narration caption (kept smaller)
 
 ## The clamped content rectangle in viewport coordinates. UI should be laid out within this.
 ## On a normal 16:9 or 16:10 display this equals the full viewport.
@@ -152,11 +156,14 @@ func _recompute() -> void:
 	# dimensions, clamp to the aspect band in CSS space, then multiply back to get physical
 	# pixel content_rect and vmin.
 	dpr = _dpr()
-	# ui is the text and touch target scale: dpr plus a boost on phones, so the legacy CSS sized
-	# chrome is not left tiny on a small high density screen. Geometry, widths, spacing and the
-	# theme (the pause menu, borders) stay on the true dpr so the layout does not overflow and
-	# thin borders stay crisp. On desktop the boost is 1.0, so the look there is unchanged.
-	var ui := dpr * _ui_boost()
+	# the UI scales: dpr plus a per role boost on phones, so the legacy CSS sized chrome is not left
+	# tiny on a small high density screen. Geometry, widths, spacing and the theme (the pause menu,
+	# borders) stay on the true dpr so the layout does not overflow and thin borders stay crisp.
+	# Off touch web every boost is 1.0, so the look on desktop and native is unchanged.
+	var boost := _is_touch_web()
+	var ui := dpr * (MOBILE_UI_BOOST if boost else 1.0)        # general HUD, start screen, gate, chips
+	var ui_title := dpr * (TITLE_BOOST if boost else 1.0)      # the big display titles
+	var ui_cap := dpr * (CAPTION_BOOST if boost else 1.0)      # the narration caption
 	var vw := vp.x / dpr
 	var vh := vp.y / dpr
 	var ar := vw / maxf(vh, 1.0)
@@ -181,11 +188,11 @@ func _recompute() -> void:
 
 	# font sizes: clamp(min_css * ui, factor * vmin, max_css * ui). The ui boost lifts the small
 	# end of the range on phones, which is where the HUD lands on a 1080 tall content area.
-	fs_title = _clamp_i(roundi(54 * ui), vmin * 0.14, roundi(130 * ui))
+	fs_title = _clamp_i(roundi(54 * ui_title), vmin * 0.14, roundi(130 * ui_title))
 	fs_sub = _clamp_i(roundi(15 * ui), vmin * 0.03, roundi(22 * ui))
 	fs_body = _clamp_i(roundi(14 * ui), vmin * 0.024, roundi(19 * ui))
 	fs_menu = _clamp_i(roundi(13 * ui), vmin * 0.022, roundi(15 * ui))
-	fs_caption = _clamp_i(roundi(13 * ui), vmin * 0.024, roundi(18 * ui))
+	fs_caption = _clamp_i(roundi(13 * ui_cap), vmin * 0.024, roundi(18 * ui_cap))
 	fs_label = _clamp_i(roundi(11 * ui), vmin * 0.02, roundi(14 * ui))
 	fs_hud = _clamp_i(roundi(10 * ui), vmin * 0.02, roundi(13 * ui))
 	fs_icon = _clamp_i(roundi(14 * ui), vmin * 0.03, roundi(18 * ui))
@@ -197,8 +204,8 @@ func _recompute() -> void:
 
 	# transition cards scale from min(W, H) like the legacy canvas renderer
 	var mn := minf(cw, ch) * dpr
-	fs_card = maxi(roundi(24 * ui), roundi(mn * 0.07))
-	fs_end = maxi(roundi(30 * ui), roundi(mn * 0.085))
+	fs_card = maxi(roundi(24 * ui_title), roundi(mn * 0.07 * (ui_title / dpr)))
+	fs_end = maxi(roundi(30 * ui_title), roundi(mn * 0.085 * (ui_title / dpr)))
 
 	# widths stay on dpr (content relative, must not overflow); paddings scale with ui (touch)
 	card_min_w = clampf(cw * dpr * 0.16, 200 * dpr, 340 * dpr)
@@ -352,10 +359,8 @@ static func _dpr() -> float:
 	return best
 
 
-## The mobile UI boost, applied on touch web (phones and tablets) and 1.0 everywhere else, so
-## desktop and native are unchanged. is_touchscreen_available is the same signal the rotation gate
+## True on a touch web device (phone or tablet), where the size boosts apply. False on desktop web
+## and native, so they are unchanged. is_touchscreen_available is the same signal the rotation gate
 ## uses to decide a device is touch.
-static func _ui_boost() -> float:
-	if OS.has_feature("web") and DisplayServer.is_touchscreen_available():
-		return MOBILE_UI_BOOST
-	return 1.0
+static func _is_touch_web() -> bool:
+	return OS.has_feature("web") and DisplayServer.is_touchscreen_available()
