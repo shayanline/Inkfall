@@ -212,10 +212,21 @@ static func _clamp_i(lo: int, v: float, hi: int) -> int:
 ## Returns the device pixel ratio for the current platform.
 ## Web exports size the canvas to physical pixels via window.devicePixelRatio.
 ## All other platforms handle HiDPI internally, so the viewport is already in logical pixels.
+##
+## Two independent sources are queried and the larger is used. DisplayServer.screen_get_scale()
+## reads the ratio natively at engine level and is available immediately, while the
+## JavaScriptBridge eval can return null or run before the bridge is ready on some mobile
+## browsers and in-app webviews. Relying on a single source left the ratio at 1.0 on those
+## devices, which squashed the whole HUD. Taking the max means whichever source reports the real
+## ratio wins, so the HUD is only left at 1.0 when the device genuinely has no pixel scaling.
 static func _dpr() -> float:
 	if not OS.has_feature("web"):
 		return 1.0
+	var best := 1.0
+	var native := DisplayServer.screen_get_scale()
+	if native > best:
+		best = native
 	var r = JavaScriptBridge.eval("window.devicePixelRatio", true)
 	if r != null:
-		return maxf(1.0, float(r))
-	return 1.0
+		best = maxf(best, float(r))
+	return best
