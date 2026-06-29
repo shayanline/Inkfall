@@ -2,7 +2,8 @@ name: Branch previews
 
 # Builds a web preview for every branch and publishes it on the gh-pages branch:
 #   master           -> site root             (https://<owner>.github.io/Inkfall/)
-#   any other branch -> /branches/<slug>/     (slug = branch, slashes to dashes)
+#   any other branch -> /branches/<slug>/     (slug = branch with slashes as
+#                                              dashes, plus a short name hash)
 # Deleting a branch removes its folder. Non master branches always live under
 # branches/, so a branch can never write over the root, the dashboard or
 # master's files. Branch names are validated before any write (see ghpages.sh).

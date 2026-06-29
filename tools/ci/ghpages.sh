@@ -13,7 +13,10 @@
 #
 # Layout on gh-pages:
 #   master           -> the site root
-#   any other branch -> branches/<slug>/        (slug = branch, slashes to dashes)
+#   any other branch -> branches/<slug>/        (slug = branch with slashes as
+#                                                dashes, plus a short hash of the
+#                                                full name so similar names never
+#                                                share a folder)
 #   the dashboard    -> _dashboard/
 # Non master branches always live under branches/, so a branch can never write
 # over the root, the dashboard, .nojekyll, or master's files, whatever it is
@@ -118,11 +121,16 @@ apply_op() {
     failed)   write_meta "$DIR" failed ;;
     deployed)
       [ -d "$SRC_WEB" ] || fail "no build at $SRC_WEB"
-      # Replace a non master preview wholesale so a removed or renamed asset
-      # cannot linger and serve a mixed build. The root (master) keeps its
-      # siblings (branches/, _dashboard, .nojekyll), so it is overwritten in
-      # place rather than wiped.
-      [ "$BRANCH" = "master" ] || rm -rf "$DIR"
+      # Replace the preview wholesale so a removed or renamed asset cannot linger
+      # and serve a mixed build. A branch folder is wiped outright. master is at
+      # the root, so clear the root but keep the system paths beside it.
+      if [ "$BRANCH" = "master" ]; then
+        find . -maxdepth 1 -mindepth 1 \
+          ! -name branches ! -name _dashboard ! -name .nojekyll ! -name .git \
+          -exec rm -rf {} +
+      else
+        rm -rf "$DIR"
+      fi
       mkdir -p "$DIR"
       cp -R "$SRC_WEB/." "$DIR/"
       write_meta "$DIR" deployed

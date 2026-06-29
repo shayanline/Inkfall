@@ -31,8 +31,8 @@ Pick a tale on the start screen, then tap or click to advance. Press `L` for lig
 Every push to `master` exports the project for web and deploys it to GitHub Pages. Play the
 latest build at [shayanline.github.io/Inkfall](https://shayanline.github.io/Inkfall/).
 
-Feature branches get their own preview too, listed in the
-[live previews](#live-previews) table below.
+Feature branches get their own preview too, on the
+[live previews](#live-previews) dashboard below.
 
 ## Run it locally
 
