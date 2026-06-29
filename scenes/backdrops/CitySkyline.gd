@@ -10,12 +10,13 @@ const MID := preload("res://art/city/mid.png")
 const NEAR := preload("res://art/city/near.png")
 
 
-## Full city skyline (street level): far, mid and the lit near buildings.
+## Full city skyline (street level): far, mid and the lit near buildings, scaled up so the towers
+## rise high and read as a city around us rather than a distant band.
 static func build(parent: Node2D, board_size: Vector2, ground_y: float, seed_value := 0) -> void:
-	var scl := (board_size.x / 2.3) / float(FAR.get_width())
-	_layer(parent, FAR, -3, Color(0.74, 0.8, 0.98), scl * 0.82, -6.0, ground_y, board_size, seed_value)
-	_layer(parent, MID, -2, Color(0.95, 0.99, 1.12), scl * 0.92, 4.0, ground_y, board_size, seed_value)
-	_layer(parent, NEAR, -1, Color(1.22, 1.23, 1.34), scl, 14.0, ground_y, board_size, seed_value)
+	var scl := (board_size.x / 1.15) / float(FAR.get_width())
+	_layer(parent, FAR, -3, Color(0.74, 0.8, 0.98), scl * 0.78, -10.0, ground_y, board_size, seed_value)
+	_layer(parent, MID, -2, Color(0.95, 0.99, 1.12), scl * 0.9, 6.0, ground_y, board_size, seed_value)
+	_layer(parent, NEAR, -1, Color(1.22, 1.23, 1.34), scl, 18.0, ground_y, board_size, seed_value)
 
 
 ## A distant skyline only (rooftop vantage): the far and mid towers, smaller, sitting low.
