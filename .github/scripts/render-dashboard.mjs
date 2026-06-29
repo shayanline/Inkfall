@@ -158,12 +158,18 @@ function row(meta, prs) {
   const commitCell = repoUrl && meta.sha
     ? `<a href="${repoUrl}/commit/${esc(meta.sha)}"><code>${esc(meta.sha)}</code></a>`
     : `<code>${esc(meta.sha || '')}</code>`;
+  // The stored stamp is UTC. The visible text is the UTC value, which the inline
+  // script below rewrites to relative local time ("2 hours ago") in the viewer's
+  // browser. Without script the UTC fallback still reads fine.
+  const updatedCell = meta.updated
+    ? `<td class="updated" data-utc="${esc(meta.updated)}">${esc(meta.updated)} UTC</td>`
+    : '<td class="muted">-</td>';
   return `      <tr>
         <td><code>${esc(meta.branch)}</code></td>
         <td><a href="${esc(meta.url)}">open</a></td>
         <td>${prCell}</td>
         <td><span class="badge ${esc(status)}">${esc(status)}</span></td>
-        <td>${esc(meta.updated || '')}</td>
+        ${updatedCell}
         <td>${commitCell}</td>
       </tr>`;
 }
@@ -212,13 +218,36 @@ function page(metas, prs) {
     <p class="sub">Live build of every branch. This page refreshes itself, and rebuilds from the deployed folders on each run. Generated ${esc(now)} UTC.</p>
     <table>
       <thead>
-        <tr><th>Branch</th><th>Preview</th><th>PR</th><th>Status</th><th>Updated (UTC)</th><th>Commit</th></tr>
+        <tr><th>Branch</th><th>Preview</th><th>PR</th><th>Status</th><th>Updated</th><th>Commit</th></tr>
       </thead>
       <tbody>
 ${rows}
       </tbody>
     </table>
   </main>
+  <script>
+    (function () {
+      var rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+      var units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+      function ago(date) {
+        var diff = (date.getTime() - Date.now()) / 1000;
+        for (var i = 0; i < units.length; i++) {
+          if (Math.abs(diff) >= units[i][1]) return rtf.format(Math.round(diff / units[i][1]), units[i][0]);
+        }
+        return rtf.format(Math.round(diff), 'second');
+      }
+      function render() {
+        var cells = document.querySelectorAll('.updated[data-utc]');
+        for (var i = 0; i < cells.length; i++) {
+          var date = new Date(cells[i].getAttribute('data-utc').replace(' ', 'T') + ':00Z');
+          if (isNaN(date.getTime())) continue;
+          cells[i].textContent = ago(date);
+          cells[i].title = date.toLocaleString();
+        }
+      }
+      render();
+    })();
+  </script>
 </body>
 </html>
 `;
