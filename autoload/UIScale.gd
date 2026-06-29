@@ -46,10 +46,16 @@ var vmin := 1080.0
 ## platforms Godot handles HiDPI internally and this is always 1.0.
 var dpr := 1.0
 
-## Cache of the authored border widths and corner radii per shared theme StyleBoxFlat, keyed by
-## instance id. Captured once so the dpr scaling in _scale_theme_borders stays idempotent across
-## resizes (it always scales from the base, never from an already scaled value).
-var _border_bases := {}
+## Caches of the authored theme values, captured once so the dpr scaling in _scale_theme always
+## starts from the base and stays idempotent. _style_bases keys a StyleBox by instance id (border
+## widths, corner radii and content margins). _font_bases keys a theme font size by "type/name".
+var _style_bases := {}
+var _font_bases := {}
+
+## The dpr the theme was last scaled at, so the pass is skipped when nothing changed. size_changed
+## fires often on mobile web (address bar show or hide, pinch), but the theme scaling only depends
+## on dpr, never the viewport size.
+var _scaled_dpr := -1.0
 
 ## Gap between adjacent HUD chips (physical pixels). Scaled by dpr.
 var gap := 6.0
@@ -206,7 +212,7 @@ func _recompute() -> void:
 	end_box_top = 240.0 * dpr
 	end_box_bottom = 90.0 * dpr
 
-	_scale_theme_borders()
+	_scale_theme()
 	scale_changed.emit()
 
 
@@ -215,39 +221,74 @@ static func _clamp_i(lo: int, v: float, hi: int) -> int:
 	return clampi(roundi(v), lo, hi)
 
 
-## Scale the border widths and corner radii of the shared theme styleboxes by dpr.
+## Scale every value the theme authors in the 1080 base coordinate space (font sizes, border
+## widths, corner radii and content margins) by dpr, in place on the shared theme.
 ##
-## These are authored in the 1080 base coordinate space, so on a HiDPI canvas a 1px border renders
-## as a sub pixel hairline that blurs or vanishes while the dpr scaled fonts around it grow. Scaling
-## them in place on the shared StyleBoxFlat resources keeps every bordered control (buttons, panels,
-## cards) crisp without per control overrides. The authored values are cached on first run so the
-## scaling always starts from the base and stays idempotent when dpr changes (e.g. on rotation).
-func _scale_theme_borders() -> void:
+## On a HiDPI web canvas the stretch shrinks the whole UI, so a theme size of 24 or a 1px border
+## ends up tiny or sub pixel thin. Scaling the theme itself means every theme driven control (the
+## pause menu, the poster modal, the act dropdown, every bordered panel and button) scales without
+## per control code, in any orientation. Controls that already apply an explicit UIScale font size
+## or padding override are unaffected, the override still wins, so there is no double scaling. At
+## dpr 1 (desktop) every value resolves back to its authored size, so the look there is unchanged.
+##
+## The pass is skipped when dpr has not changed, and shared StyleBox instances (many states reuse
+## one resource) are scaled once per pass, so frequent mobile resizes stay cheap.
+func _scale_theme() -> void:
+	if is_equal_approx(dpr, _scaled_dpr):
+		return
+	_scaled_dpr = dpr
 	var theme := ThemeDB.get_project_theme()
 	if theme == null:
 		return
+	var seen := {}
 	for type in theme.get_type_list():
-		for name in theme.get_stylebox_list(type):
-			var flat := theme.get_stylebox(name, type) as StyleBoxFlat
-			if flat == null:
+		for fname in theme.get_font_size_list(type):
+			var fkey := str(type) + "/" + str(fname)
+			if not _font_bases.has(fkey):
+				_font_bases[fkey] = theme.get_font_size(fname, type)
+			var fbase: int = _font_bases[fkey]
+			if fbase > 0:
+				theme.set_font_size(fname, type, maxi(1, roundi(fbase * dpr)))
+		for sname in theme.get_stylebox_list(type):
+			var sb := theme.get_stylebox(sname, type)
+			if sb == null or seen.has(sb.get_instance_id()):
 				continue
-			var key := flat.get_instance_id()
-			if not _border_bases.has(key):
-				_border_bases[key] = [
-					flat.border_width_left, flat.border_width_top,
-					flat.border_width_right, flat.border_width_bottom,
-					flat.corner_radius_top_left, flat.corner_radius_top_right,
-					flat.corner_radius_bottom_right, flat.corner_radius_bottom_left,
-				]
-			var b: Array = _border_bases[key]
-			flat.border_width_left = _scale_px(b[0])
-			flat.border_width_top = _scale_px(b[1])
-			flat.border_width_right = _scale_px(b[2])
-			flat.border_width_bottom = _scale_px(b[3])
-			flat.corner_radius_top_left = _scale_px(b[4])
-			flat.corner_radius_top_right = _scale_px(b[5])
-			flat.corner_radius_bottom_right = _scale_px(b[6])
-			flat.corner_radius_bottom_left = _scale_px(b[7])
+			seen[sb.get_instance_id()] = true
+			_scale_stylebox(sb)
+
+
+## Scale one shared stylebox's content margins, and (if flat) its border widths and corner radii.
+func _scale_stylebox(sb: StyleBox) -> void:
+	var key := sb.get_instance_id()
+	if not _style_bases.has(key):
+		var base := {
+			"ml": sb.content_margin_left, "mt": sb.content_margin_top,
+			"mr": sb.content_margin_right, "mb": sb.content_margin_bottom,
+		}
+		if sb is StyleBoxFlat:
+			base["bl"] = sb.border_width_left
+			base["bt"] = sb.border_width_top
+			base["br"] = sb.border_width_right
+			base["bb"] = sb.border_width_bottom
+			base["cl"] = sb.corner_radius_top_left
+			base["cr"] = sb.corner_radius_top_right
+			base["cb"] = sb.corner_radius_bottom_right
+			base["ca"] = sb.corner_radius_bottom_left
+		_style_bases[key] = base
+	var b: Dictionary = _style_bases[key]
+	sb.content_margin_left = _scale_margin(b["ml"])
+	sb.content_margin_top = _scale_margin(b["mt"])
+	sb.content_margin_right = _scale_margin(b["mr"])
+	sb.content_margin_bottom = _scale_margin(b["mb"])
+	if sb is StyleBoxFlat:
+		sb.border_width_left = _scale_px(b["bl"])
+		sb.border_width_top = _scale_px(b["bt"])
+		sb.border_width_right = _scale_px(b["br"])
+		sb.border_width_bottom = _scale_px(b["bb"])
+		sb.corner_radius_top_left = _scale_px(b["cl"])
+		sb.corner_radius_top_right = _scale_px(b["cr"])
+		sb.corner_radius_bottom_right = _scale_px(b["cb"])
+		sb.corner_radius_bottom_left = _scale_px(b["ca"])
 
 
 ## Scale an authored pixel value by dpr, keeping a positive value at least 1px so a thin border is
@@ -256,6 +297,14 @@ func _scale_px(base: int) -> int:
 	if base <= 0:
 		return base
 	return maxi(1, roundi(base * dpr))
+
+
+## Scale a content margin by dpr. An unset margin (-1) is left untouched so the stylebox keeps
+## deriving it; a real margin (0 or more) scales.
+func _scale_margin(base: float) -> float:
+	if base < 0.0:
+		return base
+	return base * dpr
 
 
 ## Returns the device pixel ratio for the current platform.
