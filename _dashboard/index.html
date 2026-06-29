@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <title>Inkfall branch previews</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 2.5rem 1.25rem; background: #0c0c0e; color: #e7e7ea;
+      font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    main { max-width: 1000px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.25rem; }
+    .sub { color: #9a9aa2; margin: 0 0 1.75rem; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid #222228; }
+    th { color: #9a9aa2; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
+    a { color: #c8b3ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .muted { color: #6a6a72; }
+    .badge {
+      display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px;
+      font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge.deployed { background: #15351f; color: #6ee7a0; }
+    .badge.building { background: #3a2f12; color: #f4cd63; animation: pulse 1.2s ease-in-out infinite; }
+    .badge.failed { background: #3a1620; color: #ff8597; }
+    @keyframes pulse { 50% { opacity: 0.45; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Inkfall branch previews</h1>
+    <p class="sub">Live build of every branch. This page refreshes itself, and rebuilds from the deployed folders on each run. Generated 2026-06-29 14:59 UTC.</p>
+    <table>
+      <thead>
+        <tr><th>Branch</th><th>Preview</th><th>PR</th><th>Status</th><th>Updated (UTC)</th><th>Commit</th></tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>feat/preview-pr-links</code></td>
+        <td><a href="https://shayanline.github.io/Inkfall/feat-preview-pr-links/">open</a></td>
+        <td><a href="https://github.com/shayanline/Inkfall/pull/6">#6</a></td>
+        <td><span class="badge building">building</span></td>
+        <td>2026-06-29 14:59</td>
+        <td><a href="https://github.com/shayanline/Inkfall/commit/e8f1117"><code>e8f1117</code></a></td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>
