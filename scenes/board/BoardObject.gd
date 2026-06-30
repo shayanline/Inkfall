@@ -209,3 +209,61 @@ func emit_flash(local_pos: Vector2, color: Color = LightKit.MUZZLE, peak := 3.2,
 	if board == null:
 		return
 	LightKit.flash(board, board.to_local(to_global(local_pos)), color, peak, radius_px)
+
+
+## Sample the object's top silhouette as points in its own design space, so rain can splash where
+## it actually lands (a hat, shoulders, a car roof) rather than along a flat box. Walks the solid
+## Polygon2D children (the same art the occluders use) and, across evenly spaced columns, takes the
+## topmost edge that any polygon presents at that column. Unlike the occluder pass this keeps bright
+## parts too, since a cast member's red coat or a car roof is a real surface the rain hits, not a
+## light. Returns local design-unit points (empty if the object has no solid polygons).
+func top_silhouette_points(samples := 16) -> PackedVector2Array:
+	var polys: Array[PackedVector2Array] = []
+	var lo_x := INF
+	var hi_x := -INF
+	for c in get_children():
+		if not (c is Polygon2D):
+			continue
+		var poly := c as Polygon2D
+		if poly.polygon.size() < 3:
+			continue
+		var pts := PackedVector2Array()
+		for p in poly.polygon:
+			var w: Vector2 = poly.transform * p   # the point in this object's local space
+			pts.append(w)
+			lo_x = minf(lo_x, w.x)
+			hi_x = maxf(hi_x, w.x)
+		polys.append(pts)
+	var out := PackedVector2Array()
+	if polys.is_empty() or hi_x <= lo_x:
+		return out
+	for i in samples:
+		var t := float(i) / float(maxi(samples - 1, 1))
+		var x: float = lerp(lo_x, hi_x, t)
+		var top_y := INF
+		for pts in polys:
+			var y := _top_y_at_column(pts, x)
+			if y < top_y:
+				top_y = y
+		if top_y < INF:
+			out.append(Vector2(x, top_y))   # up is negative y, so the minimum is the top surface
+	return out
+
+
+## The topmost edge y a closed polygon presents at vertical line x (INF if the column misses it).
+func _top_y_at_column(pts: PackedVector2Array, x: float) -> float:
+	var n := pts.size()
+	var best := INF
+	for j in n:
+		var a := pts[j]
+		var b := pts[(j + 1) % n]
+		if x < minf(a.x, b.x) or x > maxf(a.x, b.x):
+			continue
+		var y: float
+		if is_equal_approx(a.x, b.x):
+			y = minf(a.y, b.y)
+		else:
+			y = a.y + (x - a.x) / (b.x - a.x) * (b.y - a.y)
+		if y < best:
+			best = y
+	return best

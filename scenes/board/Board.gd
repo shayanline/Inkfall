@@ -12,6 +12,8 @@ signal fx(event: String)
 
 const RAIN_SCENE := preload("res://scenes/effects/RainField.tscn")
 const RIPPLES_SCENE := preload("res://scenes/effects/RainRipples.tscn")
+const SPLASH_SCENE := preload("res://scenes/effects/RainSplash.gd")
+const OBJECT_SPLASH_SCENE := preload("res://scenes/effects/ObjectRainSplash.gd")
 const WET_FLOOR_SCENE := preload("res://scenes/effects/WetFloor.gd")
 const NIGHTSKY_SCENE := preload("res://scenes/effects/NightSky.tscn")
 const LIGHTNING_SCENE := preload("res://scenes/effects/Lightning.tscn")
@@ -34,6 +36,7 @@ var _key_light: PointLight2D
 var _moon_light: PointLight2D
 var _rain: RainField
 var _ripples: RainRipples
+var _splash: RainSplash
 var _lightning: Lightning
 var _light_sync_timer := 0.0
 const _LIGHT_SYNC_INTERVAL := 0.2   ## how often ripple lights are refreshed (seconds)
@@ -152,6 +155,8 @@ func _build_content() -> void:
 		if obj:
 			obj.build_occluders()
 			obj.apply_volume_light()
+			if not act.indoor:
+				_attach_object_splash(obj)
 
 
 ## Set light_mask on a node and all its CanvasItem descendants, so a whole backdrop joins one layer.
@@ -174,6 +179,20 @@ func _spawn(p: Placement, base_z: int) -> BoardObject:
 	line_changed.connect(obj.on_line)
 	fx.connect(obj.on_fx)
 	return obj
+
+
+## Hang a rain splash off the object's top silhouette, so drops visibly catch on it (a hat,
+## shoulders, a car roof). Parented to the object so it scales, walks and hides with it. Skipped
+## for objects with no solid art (a sign drawn only from lines or labels yields no silhouette).
+func _attach_object_splash(obj: BoardObject) -> void:
+	var pts := obj.top_silhouette_points()
+	if pts.is_empty():
+		return
+	var splash := OBJECT_SPLASH_SCENE.new()
+	splash.blood = act.blood_rain
+	splash.points = pts
+	splash.z_index = 1   # just above the object's own art
+	obj.add_child(splash)
 
 
 ## Gather all light positions, colours and radii for ripple light sampling. BoardLight subclasses
@@ -212,6 +231,12 @@ func _build_weather() -> void:
 	_ripples.lights = _collect_lights()
 	_ripples.z_index = 55
 	add_child(_ripples)
+	_splash = SPLASH_SCENE.new()
+	_splash.blood = act.blood_rain
+	_splash.area = size
+	_splash.ground_y = ground_y
+	_splash.z_index = 58
+	add_child(_splash)
 	var wet_floor := WetFloor.new()
 	wet_floor.area = size
 	wet_floor.ground_y = ground_y

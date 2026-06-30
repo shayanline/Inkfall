@@ -8,6 +8,9 @@ extends Node2D
 ## blood red rgba(168,8,16,0.57), line width 1.1 (1.6 blood), ~19 degree leftward tilt.
 
 @export var blood := false
+## When true the drops use a soft tapered streak texture (a filmic needle) instead of the hard
+## gradient drop, for a more natural look. The far layer leans on this for soft, dim depth.
+@export var soft := true
 
 ## The board sets these before the node enters the tree.
 var area := Vector2(1920, 1080)
@@ -15,6 +18,9 @@ var ground_y := 576.0
 
 const _WIND_PERIOD := 8.0          ## seconds per full wind sway cycle
 const _WIND_AMOUNT := 0.08         ## max lateral drift added to direction.x
+## Kenney CC0 soft streak, scaled tiny so the 512px sprite reads as a thin filmic drop.
+const _STREAK_TEX := preload("res://scenes/effects/rain_streak.png")
+const _STREAK_SCALE := 0.085       ## near layer texture scale for the soft streak
 
 @onready var _near: GPUParticles2D = $Rain
 var _far: GPUParticles2D
@@ -35,6 +41,10 @@ func _ready() -> void:
 		_near.modulate = Color(0.71, 0.75, 0.82, Palette.RAIN_ALPHA)
 	_near_mat = _near.process_material.duplicate()
 	_near_mat.emission_box_extents = Vector3(area.x * 0.75, 6.0, 1.0)
+	if soft:
+		_near.texture = _STREAK_TEX
+		_near_mat.scale_min = _STREAK_SCALE * 0.85
+		_near_mat.scale_max = _STREAK_SCALE * 1.3
 	_near.process_material = _near_mat
 	# clamp lifetime so drops die around the ground line, not past it.
 	# lifetime = distance / avg_velocity. The drop travels from -30 to ground_y.
@@ -57,8 +67,12 @@ func _ready() -> void:
 	_far_mat = _near_mat.duplicate()
 	_far_mat.initial_velocity_min = _near_mat.initial_velocity_min * 0.6
 	_far_mat.initial_velocity_max = _near_mat.initial_velocity_max * 0.6
-	_far_mat.scale_min = 0.5
-	_far_mat.scale_max = 0.8
+	if soft:
+		_far_mat.scale_min = _STREAK_SCALE * 0.55
+		_far_mat.scale_max = _STREAK_SCALE * 0.8
+	else:
+		_far_mat.scale_min = 0.5
+		_far_mat.scale_max = 0.8
 	_far.process_material = _far_mat
 	_far.lifetime = _near.lifetime * 1.4
 	_far.preprocess = _far.lifetime
