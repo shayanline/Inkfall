@@ -305,7 +305,7 @@ params = {
 "color": Color(1, 0, 0.09411765, 1),
 "h": 102,
 "ignite": true,
-"intensity": 1.8,
+"intensity": 1.0,
 "label": "EAT",
 "par": 0.3,
 "seed": 5.2,

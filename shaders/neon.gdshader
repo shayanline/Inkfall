@@ -10,7 +10,7 @@ render_mode blend_add;
 uniform vec4 glow_color : source_color = vec4(1.0, 0.0, 0.1, 1.0);
 uniform float core_width : hint_range(0.01, 0.5) = 0.08;   // half-width of the hot glass core, narrow so it reads as a thin bright line
 uniform float glow_falloff : hint_range(0.5, 8.0) = 2.8;   // larger = tighter halo; steep so the glow clings to the tube, not a fog
-uniform float core_heat : hint_range(0.0, 1.0) = 0.55;     // how much the core whitens (stays hued < 1)
+uniform float core_heat : hint_range(0.0, 1.0) = 0.12;     // how much the core whitens (kept low so a red tube reads red, not pink)
 uniform float brightness : hint_range(1.0, 6.0) = 2.8;     // overdrive to survive the CanvasModulate crush, enough to read as glowing glass
 
 // along-tube modulation

@@ -320,7 +320,7 @@ params = {
 "color": Color(1, 0, 0.09411765, 1),
 "h": 102,
 "ignite": true,
-"intensity": 1.8,
+"intensity": 1.0,
 "label": "EAT",
 "par": 0.3,
 "seed": 5.2,
@@ -354,7 +354,7 @@ fx = PackedStringArray()
 [sub_resource type="Resource" id="Resource_od4v8"]
 script = ExtResource("3_a23g5")
 title = "THE ALLEY"
-key_light = Vector2(0.74, 0.3)
+key_light = Vector2(0.45, 0.34)
 has_moon = true
 moon = Vector2(0.5, 0.11)
 backdrop = SubResource("Resource_55bb5")
@@ -764,7 +764,7 @@ scene = ExtResource("12_6n6rd")
 params = {
 "color": Color(1, 0, 0.09411765, 1),
 "h": 60,
-"intensity": 2.4,
+"intensity": 1.0,
 "label": "FORTUNE",
 "par": 0.2,
 "seed": 2.2,
@@ -884,7 +884,7 @@ params = {
 "color": Color(1, 0, 0.09411765, 1),
 "dropout": true,
 "h": 60,
-"intensity": 2.4,
+"intensity": 1.0,
 "label": "FORTUNE",
 "par": 0.2,
 "seed": 4.4,

@@ -156,7 +156,7 @@ func _hallucination() -> Dictionary:
 				"title": "THE ALLEY", "ground": 0.8, "key_light": {"x": 0.45, "y": 0.34}, "moon": {"x": 0.5, "y": 0.11}, "rain_vol": 0.16,
 				"backdrop": {"type": "alley", "seed": 77123},
 				"lights": [
-					{"type": "neon", "x": 0.72, "y": 0.22, "w": 192, "h": 102, "color": Color("ff0018"), "label": "EAT", "seed": 5.2, "par": 0.3, "shape": "arrow", "ignite": true, "intensity": 1.8},
+					{"type": "neon", "x": 0.72, "y": 0.22, "w": 192, "h": 102, "color": Color("ff0018"), "label": "EAT", "seed": 5.2, "par": 0.3, "shape": "arrow", "ignite": true, "intensity": 1.0},
 				],
 				"cast": [
 					{"type": "dumpster", "x": 0.11, "scale": 1, "par": 0.4},
@@ -245,7 +245,7 @@ func _danny() -> Dictionary:
 				"backdrop": {"type": "room", "wall": "#191c26", "wall_top": "#262a37", "door": 0.64},
 				"lights": [
 					{"type": "bulb", "x": 0.45, "y": 0.30, "intensity": 1, "flicker": true, "par": 0.2},
-					{"type": "neon", "x": 0.10, "y": 0.245, "w": 240, "h": 60, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 2.2, "par": 0.2, "intensity": 2.4},
+					{"type": "neon", "x": 0.10, "y": 0.245, "w": 240, "h": 60, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 2.2, "par": 0.2, "intensity": 1.0},
 				],
 				"cast": [
 					{"type": "rouletteWheel", "x": 0.20, "y": 0.74, "scale": 0.8, "par": 0.2},
@@ -269,7 +269,7 @@ func _danny() -> Dictionary:
 				"backdrop": {"type": "room", "wall": "#15171f", "wall_top": "#202430", "door": 0.62},
 				"lights": [
 					{"type": "bulb", "x": 0.45, "y": 0.30, "intensity": 0.8, "flicker": true, "par": 0.2},
-					{"type": "neon", "x": 0.10, "y": 0.245, "w": 240, "h": 60, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 4.4, "par": 0.2, "intensity": 2.4, "dropout": true},
+					{"type": "neon", "x": 0.10, "y": 0.245, "w": 240, "h": 60, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 4.4, "par": 0.2, "intensity": 1.0, "dropout": true},
 				],
 				"cast": [
 					{"type": "slotMachine", "x": 0.08, "scale": 0.85, "par": 0.2},

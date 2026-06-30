@@ -55,6 +55,7 @@ var _dropout := false
 ## The two PointLight2Ds, built in place().
 var _surface_light: PointLight2D   ## sign shaped, tight surface glow
 var _air_light: PointLight2D       ## wide soft air bloom
+var _floor_light: PointLight2D     ## dim vertical spill dropped onto the wet floor below
 
 var _buzz_t := 0.0
 var _buzz_on := false
@@ -286,13 +287,14 @@ func _build_label() -> void:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", _FONT)
-	# The label text is the brightest part of the sign: white-hot at the centre, so the letters
-	# read as the lit glass tubes themselves, not as captions painted on top of a glow. The outline
-	# gives each letter a coloured fringe that ties it to the sign colour.
+	# The label text reads as lit glass tubes in the sign's own colour, not white captions: a bright,
+	# mostly hued fill with only a small lift toward white, so a red sign keeps red letters instead of
+	# blooming into a pink smear. The outline gives each letter a coloured fringe that ties it to the
+	# sign colour.
 	var hot := Color(
-		minf(color.r * 1.4 + 0.5, 1.0),
-		minf(color.g * 1.4 + 0.5, 1.0),
-		minf(color.b * 1.4 + 0.5, 1.0))
+		minf(color.r * 1.25 + 0.1, 1.0),
+		minf(color.g * 1.25 + 0.1, 1.0),
+		minf(color.b * 1.25 + 0.1, 1.0))
 	label.add_theme_color_override("font_color", hot)
 	label.add_theme_color_override("font_outline_color", color)
 	label.add_theme_constant_override("outline_size", 4)
@@ -395,20 +397,48 @@ func _build_lights() -> void:
 	LightKit.ambient(_air_light)
 	add_child(_air_light)
 
+	_build_floor_spill()
+
 	# Keep _light (from BoardLight) pointing at the surface light for the base class.
 	_light = _surface_light
 	_base_energy = _surface_energy()
 
 
-## The centre x of the sign shape, accounting for arrow and chevron offset.
+## A dim, vertically stretched spill dropped from the sign down onto the floor below, so the neon
+## reads as a real drop of light and reflection beneath it, the way a high sign smears its colour
+## down a wet street or a bar room floor. The sign's own surface and air lights only reach the wall,
+## so without this the floor under the sign stays black. Outdoors the wet floor is a genuine light
+## receiver, so this shows as a shimmering reflection; indoors it pools on the bare floor.
+func _build_floor_spill() -> void:
+	if board == null or board.act == null:
+		return
+	var node_scale := maxf(board.unit * obj_scale, 0.001)
+	# Distance from the sign down to the ground line, in this object's design units.
+	var drop := (board.ground_y - global_position.y) / node_scale
+	if drop <= 20.0:
+		return   # the sign already sits at or below the floor: nothing to pool below it
+	_floor_light = PointLight2D.new()
+	_floor_light.texture = _LIGHT_TEX
+	_floor_light.color = color
+	_floor_light.energy = _floor_energy()
+	# Centre it low, over the floor under the sign, so the pool lands on the wet asphalt and streaks
+	# toward the foreground rather than washing the wall.
+	_floor_light.position = Vector2(_shape_centre_x(), _h * 0.5 + drop * 0.85)
+	# Tall and narrow: a vertical smear down the wet floor, not a round blob. Reaches well into the
+	# foreground so the reflection streaks toward the viewer.
+	_floor_light.texture_scale = drop * 2.0 / 64.0
+	_floor_light.scale = Vector2(0.45, 1.0)
+	_floor_light.blend_mode = Light2D.BLEND_MODE_ADD
+	_floor_light.range_item_cull_mask = Board.LAYER_FOREGROUND
+	LightKit.ambient(_floor_light)   # a soft spill, never a shadow caster
+	add_child(_floor_light)
+
+
+## The centre x of the sign shape for lighting purposes. The lights sit over the body of the sign
+## where the text and glass tubes are, not biased toward the arrowhead tip. The tube shader handles
+## brightening at the actual bend points, so the spill lights only need to cover the main mass.
 func _shape_centre_x() -> float:
-	match _shape:
-		"arrow":
-			return _w / 2.0 + _h * 0.45
-		"chevron":
-			return _w / 2.0 + _h * 0.2
-		_:
-			return _w / 2.0
+	return _w / 2.0
 
 
 func _surface_energy() -> float:
@@ -417,6 +447,12 @@ func _surface_energy() -> float:
 
 func _air_energy() -> float:
 	return 1.3 * intensity
+
+
+## The floor spill is dim: it only needs to tint the wet asphalt's ripples into a reflection, not
+## relight the scene.
+func _floor_energy() -> float:
+	return 1.7 * intensity
 
 
 # --- light contribution (improvement 4) ----------------------------------------------------
@@ -439,6 +475,13 @@ func get_light_contributions() -> Array[Dictionary]:
 			"col": color,
 			"radius": _air_light.texture_scale * 64.0 * 0.5,
 			"energy": _air_light.energy,
+		})
+	if _floor_light:
+		out.append({
+			"pos": to_global(_floor_light.position),
+			"col": color,
+			"radius": _floor_light.texture_scale * 64.0 * maxf(_floor_light.scale.x, _floor_light.scale.y),
+			"energy": _floor_light.energy,
 		})
 	return out
 
@@ -546,6 +589,8 @@ func _cold_restrike() -> void:
 		tw.parallel().tween_property(_surface_light, "energy", _surface_energy(), _RESTRIKE_DUR)
 	if _air_light:
 		tw.parallel().tween_property(_air_light, "energy", _air_energy(), _RESTRIKE_DUR)
+	if _floor_light:
+		tw.parallel().tween_property(_floor_light, "energy", _floor_energy(), _RESTRIKE_DUR)
 	_enter_state(_State.BUZZ)
 
 
@@ -561,3 +606,5 @@ func _set_light_energy(f: float) -> void:
 		_surface_light.energy = _surface_energy() * f
 	if _air_light:
 		_air_light.energy = _air_energy() * f
+	if _floor_light:
+		_floor_light.energy = _floor_energy() * f

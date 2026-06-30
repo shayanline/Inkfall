@@ -307,7 +307,7 @@ scene = ExtResource("11_7e4bj")
 params = {
 "color": Color(1, 0, 0.09411765, 1),
 "h": 60,
-"intensity": 2.4,
+"intensity": 1.0,
 "label": "FORTUNE",
 "par": 0.2,
 "seed": 2.2,
@@ -427,7 +427,7 @@ params = {
 "color": Color(1, 0, 0.09411765, 1),
 "dropout": true,
 "h": 60,
-"intensity": 2.4,
+"intensity": 1.0,
 "label": "FORTUNE",
 "par": 0.2,
 "seed": 4.4,
