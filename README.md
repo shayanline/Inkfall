@@ -5,7 +5,7 @@ staged and played one beat at a time. You tap through the night, the captions fa
 narration, and the only colour is the colour that bleeds.
 
 It is built natively in [Godot 4.7](https://godotengine.org). Stories are data and the look
-is shared, so telling a new tale is writing a resource, not engine code.
+is shared.
 
 ## The idea
 
@@ -15,9 +15,6 @@ lights, the cast, and the lines that play over them. The board reads that resour
 stages it as a real Godot scene tree: object scenes built from Polygon2D, Line2D and
 Sprite2D, animated with AnimationPlayer and lit by native 2D lights over a global wash, with
 bloom, rain and the colour red where the story bleeds. The flow runs on signals.
-
-Behaviour is data too. A character walks, a sign ignites, a gun fires, blood crawls to the
-drain, all expressed as parameters and per line effects rather than new code.
 
 ## Stories on the board
 

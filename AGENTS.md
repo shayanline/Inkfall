@@ -1,8 +1,8 @@
 # INKFALL, board operating guide
 
 A noir crime motion comic told on a storytelling board, built natively in Godot 4.7. Stories are
-typed data and the look is shared, so telling a new tale is writing a resource, not board code. This
-is a board for staging noir stories, not a general purpose engine.
+typed data and the look is shared. This is a board for staging noir stories, not a general purpose
+engine.
 
 The board is a real Godot scene tree: every placed object (a backdrop, a light, a cast member) is a
 node scene built from Polygon2D, Line2D, Sprite2D and Label, lit by native 2D lights (PointLight2D
@@ -154,8 +154,7 @@ blood red) and `fx` (`muzzle`, `blood`, `lightning`, `hammer`, `lighter`).
 ## Extending
 
 - New object: add a scene under the matching `scenes/` folder whose root extends `BoardObject` (or
-  `BoardLight` / `BoardBackdrop`), then place it in a tale by pointing a `Placement` at it. New
-  behaviour is params, fx and flags, not board edits.
+  `BoardLight` / `BoardBackdrop`), then place it in a tale by pointing a `Placement` at it.
 - New tale: author a `Story` resource (in the inspector, or extend `tools/build_stories.gd`), then add
   it to `stories/library.tres`. No board change.
 - Restyle everything: `autoload/Palette.gd` (palette and timing), the CanvasModulate wash and lights
@@ -188,7 +187,7 @@ it with minimal config, never a bespoke glow:
 - GDScript style: tabs for indentation, typed vars and returns where the surrounding code already is,
   `##` doc comments on scripts and public methods, `_private` for internals. Read a neighbouring
   script before adding one.
-- Stories are data, behaviour is data. Keep the look centralised: lighting goes through native 2D
+- Keep the look centralised: lighting goes through native 2D
   lights over the shared wash, colours come from `Palette`, and the UI look comes from the shared
   `themes/inkfall_theme.tres` (use its type variations, do not add per control theme overrides).
 - Do it the Godot way: author geometry as scene nodes, author motion as `AnimationPlayer` animations

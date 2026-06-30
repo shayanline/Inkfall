@@ -1,7 +1,7 @@
 extends Node
 ## The flow and data model: the loaded story, the current act and the current line. It never
 ## touches the visual tree, Main reads it and drives the view. Stories stay portable data
-## (typed Story / Act / Line resources), so telling a tale is writing data, not board code.
+## (typed Story / Act / Line resources).
 
 signal line_changed(index: int)
 signal fx_fired(event: String)
