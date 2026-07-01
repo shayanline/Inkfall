@@ -63,7 +63,8 @@ func _build_door(vp: Vector2, g: float) -> void:
 	door_light.texture = LightTex.radial()
 	door_light.position = Vector2(dx + dw / 2.0 - gap * 0.5, dtop + dh * 0.55)
 	door_light.color = Color(1.0, 0.86, 0.62)
-	door_light.energy = 1.25
+	# Neutral default energy under the bloom pyramid; re-tune from here if the doorway spill reads hot.
+	door_light.energy = 1.0
 	door_light.texture_scale = dh / 128.0 * 1.7
 	door_light.blend_mode = Light2D.BLEND_MODE_ADD
 	LightKit.caster(door_light, LightKit.WARM, 2.0)

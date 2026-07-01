@@ -42,6 +42,7 @@ var _sfx_pool: Array[AudioStreamPlayer] = []
 var _sfx_next := 0
 var _loops := {}               # name -> AudioStreamPlayer held while active
 var _suspended := {}           # player -> playback position, only those playing when paused
+var _stream_cache := {}        # path -> AudioStream, loaded once and kept for the session
 
 
 func _ready() -> void:
@@ -68,6 +69,8 @@ static func _linear_to_db(v: float) -> float:
 
 
 func _load_loop(path: String) -> AudioStream:
+	if _stream_cache.has(path):
+		return _stream_cache[path]
 	var s := load(path)
 	if s is AudioStreamMP3:
 		s.loop = true
@@ -78,6 +81,7 @@ func _load_loop(path: String) -> AudioStream:
 		s.loop_end = int(round(s.get_length() * s.mix_rate))
 	elif s is AudioStreamOggVorbis:
 		s.loop = true
+	_stream_cache[path] = s
 	return s
 
 
@@ -142,7 +146,10 @@ func play(key: String, vol_scale := 1.0, pitch := 1.0) -> void:
 		return
 	var p := _sfx_pool[_sfx_next % _sfx_pool.size()]
 	_sfx_next += 1
-	p.stream = load(SFX[key])
+	var sfx_path: String = SFX[key]
+	if not _stream_cache.has(sfx_path):
+		_stream_cache[sfx_path] = load(sfx_path)
+	p.stream = _stream_cache[sfx_path]
 	p.pitch_scale = pitch
 	p.volume_db = _linear_to_db(0.7 * vol_scale)
 	p.play()
@@ -228,6 +235,7 @@ func reset() -> void:
 	_loops.clear()
 	for p in _sfx_pool:
 		p.stop()
+	_stream_cache.clear()
 	_started = false
 
 

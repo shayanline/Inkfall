@@ -23,7 +23,8 @@ func place() -> void:
 	# and picks up the softness authored in the placement params.
 	_light.texture = LightTex.radial()
 	_light.texture_scale = 0.55
-	_base_energy = 0.6 * intensity
+	# Neutral default energy (1.0 x intensity), a clean baseline under the bloom pyramid.
+	_base_energy = intensity
 	_light.energy = _base_energy
 	LightKit.caster(_light, LightKit.FIRE, softness)
 	_build_spill()
@@ -42,7 +43,8 @@ func _build_spill() -> void:
 	_spill = PointLight2D.new()
 	_spill.texture = _SPILL_TEX
 	_spill.color = color
-	_spill_base = 1.5 * intensity
+	# Neutral default spill energy (1.0 x intensity), matched to the glass under the new bloom.
+	_spill_base = intensity
 	_spill.energy = _spill_base
 	# Centre it low, between the glass and the floor, so the brightest part of the shaft lands on the
 	# surface below the bulb.

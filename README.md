@@ -91,6 +91,9 @@ Inkfall began as an HTML canvas storytelling prototype,
 (see the [live build](https://masoudqashqai.github.io/Inkfall/)). This is its native Godot
 rebuild: the stories and the noir look carried over, the board rebuilt on real Godot 2D.
 
+The fire fixture's flame texture is derived from a "Realistic Fire Flame" illustration by
+[Vecteezy](https://www.vecteezy.com/).
+
 ## Live previews
 
 Every branch gets its own web build, listed on

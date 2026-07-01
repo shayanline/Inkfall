@@ -91,12 +91,53 @@ func _collect_solid_polys(node: Node, xform: Transform2D, out: Array) -> void:
 		_collect_solid_polys(c, xform * (c as Node2D).transform if c is Node2D else xform, out)
 
 
-## Build real shadow casters from this object's own art. Walks the full subtree of solid Polygon2D
-## nodes (recursively, so nested limb groups are covered) and adds a LightOccluder2D matching each,
-## so the 2D lights throw genuine shadows shaped like the actual figure. Bright (emissive) polygons
-## such as flames, lamp glass and neon are skipped so light sources do not block their own light,
-## and the legacy painted "Shadow" ellipse is removed (real cast shadows replace it). Called by
-## Board after place(); safe to call once.
+## Build shadow casters and apply volume lighting in a single subtree walk. Collects all solid
+## Polygon2D nodes once, then runs both the occluder build and the volume-light material pass over
+## the same result set. The legacy painted "Shadow" ellipse is removed; emissive polygons (flames,
+## glass, neon) are skipped in both passes. Called by Board after place(); safe to call once.
+func build_occluders_and_volume_light() -> void:
+	var fake := get_node_or_null("Shadow")
+	if fake:
+		fake.queue_free()
+	var entries: Array = []
+	_collect_solid_polys(self, Transform2D.IDENTITY, entries)
+	if entries.is_empty():
+		return
+	# occluder pass
+	for entry in entries:
+		var poly: Polygon2D = entry["poly"]
+		var xform: Transform2D = entry["xform"]
+		var occ := LightOccluder2D.new()
+		var shape := OccluderPolygon2D.new()
+		shape.polygon = poly.polygon
+		shape.closed = true
+		occ.occluder = shape
+		occ.transform = xform
+		add_child(occ)
+	# volume light pass: compute the shared silhouette bounds, then assign one material per polygon
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for entry in entries:
+		var xform: Transform2D = entry["xform"]
+		for p in (entry["poly"] as Polygon2D).polygon:
+			var w: Vector2 = xform * p
+			lo = Vector2(minf(lo.x, w.x), minf(lo.y, w.y))
+			hi = Vector2(maxf(hi.x, w.x), maxf(hi.y, w.y))
+	if hi.x <= lo.x:
+		return
+	for entry in entries:
+		var poly: Polygon2D = entry["poly"]
+		var xform: Transform2D = entry["xform"]
+		var mat := ShaderMaterial.new()
+		mat.shader = _FIGURE_SHADER
+		var off: Vector2 = xform.origin
+		mat.set_shader_parameter("bounds_min", lo - off)
+		mat.set_shader_parameter("bounds_max", hi - off)
+		poly.material = mat
+
+
+## Build shadow casters only (no volume light). Kept for callers that need occluders without the
+## volume material (e.g. a backdrop element that should cast shadows but is not a figure).
 func build_occluders() -> void:
 	var fake := get_node_or_null("Shadow")
 	if fake:
@@ -111,17 +152,11 @@ func build_occluders() -> void:
 		shape.polygon = poly.polygon
 		shape.closed = true
 		occ.occluder = shape
-		occ.transform = xform   # world-relative placement within the object
+		occ.transform = xform
 		add_child(occ)
 
 
-## Give this object a rounded volume so the board's 2D lights wrap it directionally: the side
-## turned toward a source (a barrel fire, a street lamp) warms, the side turned away falls to
-## shadow. Walks the full subtree of solid Polygon2D nodes (recursively, matching the occluder
-## walk) and assigns the shared volume-normal material, sized to the object's own silhouette
-## bounds (so the whole figure reads as one form, not a stack of flat plates). Bright (emissive)
-## polygons are skipped, so flames, glass and neon keep their flat glow. Called by Board after
-## build_occluders(); safe to call once.
+## Apply volume lighting only. Kept for callers that need only the material pass.
 func apply_volume_light() -> void:
 	var entries: Array = []
 	_collect_solid_polys(self, Transform2D.IDENTITY, entries)
@@ -133,7 +168,7 @@ func apply_volume_light() -> void:
 		var poly: Polygon2D = entry["poly"]
 		var xform: Transform2D = entry["xform"]
 		for p in poly.polygon:
-			var w: Vector2 = xform * p   # point in this object's local space
+			var w: Vector2 = xform * p
 			lo = Vector2(minf(lo.x, w.x), minf(lo.y, w.y))
 			hi = Vector2(maxf(hi.x, w.x), maxf(hi.y, w.y))
 	if hi.x <= lo.x:
@@ -143,8 +178,6 @@ func apply_volume_light() -> void:
 		var xform: Transform2D = entry["xform"]
 		var mat := ShaderMaterial.new()
 		mat.shader = _FIGURE_SHADER
-		# Express the shared object bounds in this polygon's own local space (via the accumulated
-		# transform), so every polygon in the subtree sits correctly in one shared volume.
 		var off: Vector2 = xform.origin
 		mat.set_shader_parameter("bounds_min", lo - off)
 		mat.set_shader_parameter("bounds_max", hi - off)

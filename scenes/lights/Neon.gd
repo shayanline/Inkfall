@@ -482,24 +482,24 @@ func _shape_centre_x() -> float:
 	return _w / 2.0
 
 
+## Neutral default energies (1.0 x intensity) for all four neon lights, a clean baseline under the
+## bloom pyramid. The earlier per-light multipliers were tuned for the old, weaker bloom; re-tune
+## from this baseline if the sign reads too hot or too dim.
 func _surface_energy() -> float:
-	return 2.0 * intensity
+	return intensity
 
 
 func _air_energy() -> float:
-	return 1.3 * intensity
+	return intensity
 
 
-## The floor spill is dim: it only needs to tint the wet asphalt's ripples into a reflection, not
-## relight the scene.
 func _floor_energy() -> float:
-	return 1.7 * intensity
+	return intensity
 
 
-## Combined energy of the three tube shadow casters. Kept modest (total = 0.9 * intensity across
-## three nodes) so they contribute shadow without significantly changing the scene brightness.
+## Combined energy of the three tube shadow casters, split across the three nodes in _build_tube_casters.
 func _caster_energy() -> float:
-	return 0.9 * intensity
+	return intensity
 
 
 # --- light contribution (improvement 4) ----------------------------------------------------

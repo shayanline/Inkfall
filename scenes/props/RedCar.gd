@@ -10,7 +10,7 @@ func _ready() -> void:
 	# Real car lamps. The bright Headlight / Taillight polygons stay as the visible bulbs (the bloom
 	# spreads them); these PointLight2Ds are the actual light they throw on the street. They are
 	# children, so they mirror with the car's facing below and stay on the correct ends.
-	_add_lamp(Vector2(-78, -26), Color(1.0, 0.92, 0.72), 1.7, 1.1)   # headlight, warm, at the front
+	_add_lamp(Vector2(-78, -26), Color(1.0, 0.92, 0.72), 1.0, 1.1)   # headlight, warm, at the front (neutral default)
 	_add_lamp(Vector2(80, -26), Color(1.0, 0.22, 0.13), 1.0, 0.6)    # taillight, red, at the back
 	for fake in ["HeadlightGlow", "TaillightGlow"]:
 		var g := get_node_or_null(fake)

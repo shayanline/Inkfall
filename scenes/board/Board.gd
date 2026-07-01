@@ -95,9 +95,9 @@ func _build_lighting() -> void:
 	fill.texture = LightTex.radial()
 	fill.position = Vector2(size.x * 0.5, size.y * 0.42)
 	fill.texture_scale = size.x / 256.0 * 4.5
-	# the ambient floor, a gentle lift so the cast reads without turning this into a second key.
-	# Kept low so the key's shadows stay deep and read, rather than being filled back in.
-	fill.energy = 0.42
+	# the ambient floor lift on the cast. Neutral default (1.0) under the bloom pyramid; raise the
+	# key's dominance or drop this back down if the shadows fill in too much.
+	fill.energy = 1.0
 	fill.color = Color(0.66, 0.72, 0.85) if not act.indoor else Color(0.5, 0.52, 0.6)
 	LightKit.ambient(fill)   # broad bounce, never a shadow caster
 	fill.range_item_cull_mask = LAYER_FOREGROUND | LAYER_BACKDROP   # lifts the whole scene, near and far
@@ -107,7 +107,7 @@ func _build_lighting() -> void:
 	_key_light.texture = LightTex.radial()
 	_key_light.position = Vector2(act.key_light.x * size.x, act.key_light.y * size.y)
 	_key_light.texture_scale = size.x / 256.0 * 2.8
-	_key_light.energy = 1.3
+	_key_light.energy = 1.0   # neutral default under the bloom pyramid; re-tune from here
 	_key_light.color = Color(1.0, 0.96, 0.86)
 	# The key is a broad fill that shapes the scene (the legacy 'bounce/rim'); the hard, positioned
 	# shadows come from the practical lights (the lamp gobo, fire, the doorway), not from this. A
@@ -126,7 +126,7 @@ func _build_lighting() -> void:
 		_moon_light.texture = LightTex.radial()
 		_moon_light.position = _moon_px
 		_moon_light.texture_scale = size.x / 256.0 * 3.4
-		_moon_light.energy = 0.55   # a weak, broad cool wash, not a hot pool
+		_moon_light.energy = 1.0   # neutral default under the bloom pyramid; re-tune from here
 		_moon_light.color = Palette.MOON
 		LightKit.ambient(_moon_light)   # the fill: lifts the scene, casts no shadow
 		_moon_light.range_item_cull_mask = LAYER_FOREGROUND | LAYER_BACKDROP   # lights sky too
@@ -134,8 +134,9 @@ func _build_lighting() -> void:
 
 		# Shadow caster: a second, lower-energy moon that throws the real cast shadows. It is
 		# intentionally dim (0.18) so it does not relight the scene, only deepen the shadow story.
-		# A very large radius (covers the whole frame from the moon position) and a very low smooth
-		# (0.5) give long, near-parallel crisp shadows, which is physically correct for a distant source.
+		# This is a structural ratio, not a bloom compensation: the caster covers the whole frame, so
+		# at full energy it would relight the entire night. A very large radius and a very low smooth
+		# (0.5) give long, near-parallel crisp shadows, physically correct for a distant source.
 		var moon_caster := PointLight2D.new()
 		moon_caster.texture = LightTex.radial()
 		moon_caster.position = _moon_px
@@ -170,8 +171,7 @@ func _build_content() -> void:
 	for p in act.cast:
 		var obj := _spawn(p, 0)
 		if obj:
-			obj.build_occluders()
-			obj.apply_volume_light()
+			obj.build_occluders_and_volume_light()
 			if not act.indoor:
 				_attach_object_splash(obj)
 

@@ -11,6 +11,7 @@ signal poster_requested
 signal pause_changed(paused: bool)
 
 const _ELITE := preload("res://fonts/SpecialElite.ttf")   # the typewriter font, for the scene tag tracking
+const _CAP_SHADER := preload("res://shaders/caption_clip.gdshader")
 
 const _BONE := Color(0.847, 0.831, 0.784, 1)
 const _WHITE := Color(1, 1, 1, 1)
@@ -56,6 +57,7 @@ var _playing := false
 var _ended := false
 var _controls_seen := false
 var _poster_image: Image
+var _hint_fade_tween: Tween
 
 # references kept for rescaling
 var _topbar: HBoxContainer
@@ -100,7 +102,10 @@ func _build_caption() -> void:
 	_cap_vp.size_2d_override = _CAP_VP
 	_cap_vp.size_2d_override_stretch = true
 	_cap_vp.transparent_bg = true
-	_cap_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	# idle between beats: UPDATE_WHEN_VISIBLE so the 2400x720 target is not re-composited every
+	# frame when nothing inside has changed. Switched to UPDATE_ALWAYS for the duration of the
+	# reveal and wipe tweens (the torn sweep shader samples it each frame), then back after.
+	_cap_vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	_cap_vp.gui_disable_input = true
 	add_child(_cap_vp)
 
@@ -129,7 +134,7 @@ func _build_caption() -> void:
 	_caption.add_child(_caption_label)
 
 	_cap_mat = ShaderMaterial.new()
-	_cap_mat.shader = load("res://shaders/caption_clip.gdshader")
+	_cap_mat.shader = _CAP_SHADER
 	_cap_mat.set_shader_parameter("reveal", 0.0)
 	_cap_tex = TextureRect.new()
 	_cap_tex.texture = _cap_vp.get_texture()
@@ -158,14 +163,14 @@ func _build_tap() -> void:
 	_tap.modulate.a = 0.0
 	_tap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tap.anchor_left = 0.5
-	_tap.anchor_right = 0.5
-	_tap.anchor_top = 1.0
-	_tap.anchor_bottom = 1.0
-	_tap.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_tap.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_tap.offset_top = -34.0
-	_tap.offset_bottom = -10.0
+	# anchored top center so it sits below the scene tag row
+	_tap.anchor_left = 0.0
+	_tap.anchor_right = 1.0
+	_tap.anchor_top = 0.0
+	_tap.anchor_bottom = 0.0
+	_tap.grow_vertical = Control.GROW_DIRECTION_END
+	_tap.offset_top = 56.0
+	_tap.offset_bottom = 80.0
 	add_child(_tap)
 
 
@@ -532,6 +537,9 @@ func show_caption(text: String) -> void:
 	var seed := float(GameState.act_index * 1009 + GameState.line_index + 1)
 	if _cap_tween:
 		_cap_tween.kill()
+	# the reveal shader samples the SubViewport every frame during the sweep, so it must update
+	# continuously for the tween duration. Switch to UPDATE_ALWAYS now, then back after.
+	_cap_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_cap_tween = create_tween()
 	if _cap_shown:
 		# wipe the current line out (with its own torn edge), then cut the new line in
@@ -540,6 +548,7 @@ func show_caption(text: String) -> void:
 	else:
 		_apply_caption(bb, variant, seed)
 	_cap_tween.tween_method(_set_cap_reveal, 0.0, 1.0, _CAP_IN).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_cap_tween.tween_callback(func(): _cap_vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE)
 	_cap_shown = true
 
 
@@ -586,6 +595,7 @@ func _process(_delta: float) -> void:
 func hide_caption() -> void:
 	if _cap_tween:
 		_cap_tween.kill()
+	_cap_vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	_set_cap_reveal(0.0)
 	_cap_shown = false
 
@@ -748,6 +758,14 @@ func _on_line_changed(_idx: int) -> void:
 	var line := GameState.current_line()
 	if line:
 		show_caption(line.text)
+		# auto-fade the tutorial hint after the first caption: give the reader a moment to see both,
+		# then slide the hint out so it does not permanently crowd the caption area.
+		if not _controls_seen and _tap.modulate.a > 0.0:
+			if _hint_fade_tween:
+				_hint_fade_tween.kill()
+			_hint_fade_tween = create_tween()
+			_hint_fade_tween.tween_interval(3.2)
+			_hint_fade_tween.tween_callback(mark_controls_seen)
 
 
 # --- responsive scaling --------------------------------------------------
@@ -795,10 +813,12 @@ func _rescale() -> void:
 		dup.content_margin_top = UIScale.caption_pad_v
 		dup.content_margin_bottom = UIScale.caption_pad_v
 		_caption.add_theme_stylebox_override("panel", dup)
-	# tap note
+	# tutorial hint: top center, below the scene tag row. Scales with the same ui factor as the HUD
+	# chips so it reads at a consistent size on phones.
 	_tap.add_theme_font_size_override("font_size", UIScale.fs_note)
-	_tap.offset_bottom = -UIScale.tap_bottom
-	_tap.offset_top = -UIScale.tap_bottom - 24
+	var note_h := float(UIScale.fs_note) * 2.0
+	_tap.offset_top = UIScale.tap_top
+	_tap.offset_bottom = UIScale.tap_top + note_h
 	# top bar: recompute offset_left from chip count so chips are never clipped
 	var chip_count := _chips.size()
 	_topbar.offset_right = -edg

@@ -56,7 +56,7 @@ func _build_signal(pos: Vector2, col: Color) -> PointLight2D:
 	l.texture = LightTex.radial()
 	l.position = pos
 	l.color = col
-	l.energy = 1.1
+	l.energy = 1.0   # neutral default under the bloom pyramid
 	l.texture_scale = 0.42
 	l.blend_mode = Light2D.BLEND_MODE_ADD
 	LightKit.ambient(l)

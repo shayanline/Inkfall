@@ -8,12 +8,24 @@ extends Node2D
 
 const BOARD_SCENE := preload("res://scenes/board/Board.tscn")
 
-@onready var _world: Node2D = $World
-@onready var _camera: Camera2D = $Camera2D
+@onready var _scene_vp: SubViewport = $SceneViewport
+@onready var _world: Node2D = $SceneViewport/World
+@onready var _camera: Camera2D = $SceneViewport/Camera2D
 @onready var _post: ColorRect = $PostLayer/Post
 @onready var _start: StartScreen = $UILayer/StartScreen
 @onready var _hud: Hud = $UILayer/Hud
 @onready var _gate: RotationGate = $UILayer/RotationGate
+
+# Bloom pyramid: the lit scene renders into _scene_vp, then a chain of small SubViewports bright-pass
+# and downsample it (1/2 down to 1/64), and _bloom_combine sums them into one bloom texture that
+# post.gdshader adds over the scene. This scatters a wide, smooth glow that a single-pass gather can
+# not reach, and rendering the scene to its own viewport keeps the bloom feedback-free.
+const _BLOOM_DOWN := preload("res://shaders/bloom_down.gdshader")
+const _BLOOM_COMBINE := preload("res://shaders/bloom_combine.gdshader")
+const _BLOOM_DIVS := [2, 4, 8, 16, 32, 64]
+var _bloom_levels: Array[SubViewport] = []
+var _bloom_down_mats: Array[ShaderMaterial] = []
+var _bloom_combine: SubViewport
 
 var _post_mat: ShaderMaterial
 var _board: Board
@@ -35,7 +47,10 @@ var _bar_right: ColorRect
 func _ready() -> void:
 	_post_mat = _post.material
 	_post_mat.set_shader_parameter("screen_size", get_viewport_rect().size)
+	# expose the post ColorRect so a Fire fixture can resolve the post material to drive its heat haze
+	_post.add_to_group("post_material")
 	_camera.position = get_viewport_rect().size * 0.5
+	_build_bloom()
 	_build_void_fill()
 	_build_crossfade()
 	_build_letterbox()
@@ -46,6 +61,74 @@ func _ready() -> void:
 	_hud.exit_requested.connect(_on_exit_requested)
 	_hud.poster_requested.connect(_on_poster_requested)
 	get_viewport().size_changed.connect(_on_resize)
+
+
+## Build the bloom pyramid: six downsample levels chained off the scene viewport, then a combine pass
+## that sums them into one bloom texture. The scene texture and the bloom texture are handed to the
+## post shader. All buffers are tiny, so the wide glow costs almost nothing.
+func _build_bloom() -> void:
+	var vp := get_viewport_rect().size
+	_scene_vp.size = Vector2i(vp)
+	var src: Texture2D = _scene_vp.get_texture()
+	for i in _BLOOM_DIVS.size():
+		var sz := _level_size(vp, _BLOOM_DIVS[i])
+		var sv := _make_bloom_vp(sz)
+		var mat := ShaderMaterial.new()
+		mat.shader = _BLOOM_DOWN
+		mat.set_shader_parameter("tex", src)
+		mat.set_shader_parameter("texel", Vector2(1.0 / float(sz.x), 1.0 / float(sz.y)))
+		mat.set_shader_parameter("do_bright", i == 0)
+		(sv.get_child(0) as ColorRect).material = mat
+		add_child(sv)
+		_bloom_levels.append(sv)
+		_bloom_down_mats.append(mat)
+		src = sv.get_texture()
+
+	var csz := _level_size(vp, 2)
+	_bloom_combine = _make_bloom_vp(csz)
+	var cmat := ShaderMaterial.new()
+	cmat.shader = _BLOOM_COMBINE
+	for i in _bloom_levels.size():
+		cmat.set_shader_parameter("b%d" % i, _bloom_levels[i].get_texture())
+	(_bloom_combine.get_child(0) as ColorRect).material = cmat
+	add_child(_bloom_combine)
+
+	_post_mat.set_shader_parameter("scene_tex", _scene_vp.get_texture())
+	_post_mat.set_shader_parameter("bloom_tex", _bloom_combine.get_texture())
+
+
+## A bloom buffer: an always-updating SubViewport holding a full-rect ColorRect (the shader material
+## is set by the caller). Kept feedback-free because nothing here samples the screen.
+func _make_bloom_vp(sz: Vector2i) -> SubViewport:
+	var sv := SubViewport.new()
+	sv.size = sz
+	sv.disable_3d = true
+	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	var rect := ColorRect.new()
+	rect.size = Vector2(sz)
+	sv.add_child(rect)
+	return sv
+
+
+func _level_size(vp: Vector2, div: int) -> Vector2i:
+	return Vector2i(maxi(1, ceili(vp.x / float(div))), maxi(1, ceili(vp.y / float(div))))
+
+
+## Resize the scene viewport and every bloom buffer to the new window size, and refresh each
+## downsample level's texel. The ViewportTextures track the resize, so the bindings stay valid.
+func _resize_bloom(vp: Vector2) -> void:
+	if _scene_vp == null:
+		return
+	_scene_vp.size = Vector2i(vp)
+	for i in _bloom_levels.size():
+		var sz := _level_size(vp, _BLOOM_DIVS[i])
+		_bloom_levels[i].size = sz
+		(_bloom_levels[i].get_child(0) as ColorRect).size = Vector2(sz)
+		_bloom_down_mats[i].set_shader_parameter("texel", Vector2(1.0 / float(sz.x), 1.0 / float(sz.y)))
+	if _bloom_combine:
+		var csz := _level_size(vp, 2)
+		_bloom_combine.size = csz
+		(_bloom_combine.get_child(0) as ColorRect).size = Vector2(csz)
 
 
 ## a wide dark plate behind the whole world, so the first-act establishing push in (which opens on a
@@ -144,6 +227,11 @@ func _on_enter(story: Story) -> void:
 ## subtitle), then start the score and open the first act behind its own card.
 func _open_story(story: Story) -> void:
 	Transitions.cover()
+	# Build the first act's board now, while the screen is already black, so all the scene
+	# instantiation, occluder builds and weather setup happen during the story-title card hold
+	# rather than between the two cards where they cause a visible freeze.
+	GameState.go_to_act(0)
+	_swap_board(GameState.current_act())
 	var title := story.subtitle if story.subtitle != "" else story.title
 	await Transitions.show_card(title, Palette.TITLE_HOLD, false)
 	await _enter_act(0, true)
@@ -153,7 +241,9 @@ func _enter_act(index: int, first: bool) -> void:
 	_busy = true
 	GameState.go_to_act(index)
 	var act := GameState.current_act()
-	_swap_board(act)
+	# skip the swap if the board for this act is already built (first act, pre-built in _open_story)
+	if _board == null or not first:
+		_swap_board(act)
 	if first:
 		# the screen is already black from the story-title card, so show the first act card here too.
 		# the score, the whoosh, and the audio system all start together on the first act title.
@@ -448,6 +538,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_resize() -> void:
 	var vp := get_viewport_rect().size
 	_camera.position = vp * 0.5 
+	_resize_bloom(vp)
 	if _post_mat:
 		_post_mat.set_shader_parameter("screen_size", vp)
 	if _board and GameState.story:

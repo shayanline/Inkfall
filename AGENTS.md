@@ -79,7 +79,10 @@ scenes/
     BoardObject.gd         base for everything placed on the board (placement, params, hooks)
   backdrops/            Skyline, Alley, Rooftop, Room (BoardBackdrop) + BoardBackdrop.gd, plus
                         CitySkyline (the shared tiled pixel-art city used by the outdoor backdrops)
-  lights/              Lamp, Neon, Bulb (BoardLight) + BoardLight.gd (drives a PointLight2D)
+  lights/              Lamp, Neon, Bulb, Fire (BoardLight) + BoardLight.gd (drives a PointLight2D).
+                       Fire is a realistic flame fixture: a procedural fire.gdshader flame polygon,
+                       turbulent particle tips, ember sparks with micro light pops, three phase
+                       offset warm shadow casters, a ground heat pool, and a post shader heat haze.
   actors/             trenchMan, gunman, boss, thug, dealer, womanInRed, cat, crow
   props/              redCar, trafficLight, dumpster, manhole, waterTower, barrelFire, fireHydrant,
                       rouletteWheel, slotMachine, cardTable, cash, drink, knife
@@ -92,8 +95,9 @@ scenes/
 src/util/             LightKit (one-line light setup), LightTex (shared radial), light textures
 tools/                build_stories.gd (regenerates the .tres tales), ObjectShot.* (one object in
                       isolation), LightShot.* (single act screenshot), Shoot.* (whole story sweep)
-shaders/              post (bloom, wet-floor mirror, grade, halftone, grain, vignette),
-                      wet_floor (the lit, rippling asphalt), ink_wipe (the transition)
+shaders/              post (bloom, wet-floor mirror, heat haze, grade, halftone, grain, vignette),
+                      wet_floor (the lit, rippling asphalt), fire (procedural noise flame),
+                      ink_wipe (the transition)
 audio/ fonts/         sound and type
 ```
 

@@ -353,10 +353,10 @@ lines = Array[ExtResource("12_afdgo")]([SubResource("Resource_nwepr"), SubResour
 script = ExtResource("3_5puf8")
 scene = ExtResource("13_6ecc1")
 params = {
-"door": 0.62,
+"door": 0.64,
 "type": "room",
-"wall": "#15171f",
-"wall_top": "#202430"
+"wall": "#191c26",
+"wall_top": "#262a37"
 }
 
 [sub_resource type="Resource" id="Resource_jcqcl"]
@@ -413,7 +413,7 @@ script = ExtResource("3_5puf8")
 scene = ExtResource("20_fa5uv")
 params = {
 "flicker": true,
-"intensity": 0.8,
+"intensity": 1.0,
 "par": 0.2,
 "type": "bulb",
 "x": 0.45,
@@ -425,12 +425,11 @@ script = ExtResource("3_5puf8")
 scene = ExtResource("11_7e4bj")
 params = {
 "color": Color(1, 0, 0.09411765, 1),
-"dropout": true,
 "h": 60,
 "intensity": 1.0,
 "label": "FORTUNE",
 "par": 0.2,
-"seed": 4.4,
+"seed": 2.2,
 "shape": "arrow",
 "type": "neon",
 "w": 240,

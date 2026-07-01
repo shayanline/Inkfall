@@ -53,6 +53,7 @@ func _ready() -> void:
 		post.anchor_right = 1.0
 		post.anchor_bottom = 1.0
 		post.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		post.add_to_group("post_material")   # lets a Fire fixture resolve the post material for heat haze
 		layer.add_child(post)
 		pm.set_shader_parameter("screen_size", vp)
 		pm.set_shader_parameter("reflect_horizon", clampf((board.position.y + board.ground_y) / vp.y, 0.0, 1.0))

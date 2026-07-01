@@ -139,7 +139,10 @@ var caption_pad_v := 13.0
 ## Caption bottom offset (from the bottom of the viewport).
 var caption_bottom := 48.0
 
-## Tap note bottom offset.
+## Top offset of the tutorial hint (from the top of the viewport), below the scene tag row.
+var tap_top := 56.0
+
+## Tap note bottom offset (legacy, unused after tutorial move to top center).
 var tap_bottom := 10.0
 
 ## The orientation compensation factor (1.0 off touch web). Exposed so the rotation gate can scale
@@ -208,8 +211,9 @@ func _recompute() -> void:
 	fs_sub = _clamp_i(roundi(15 * ui_s), vmin * 0.03, roundi(22 * ui_s))
 	fs_body = _clamp_i(roundi(14 * ui_s), vmin * 0.024, roundi(19 * ui_s))
 	fs_menu = _clamp_i(roundi(13 * ui_s), vmin * 0.022, roundi(15 * ui_s))
-	# the caption reads at a comfortable size near the HUD, wrapping to new lines when it does not fit
-	fs_caption = _clamp_i(roundi(11 * ui_cap), vmin * 0.02, roundi(14 * ui_cap))
+	# the caption is the primary reading text, so it should be comfortably readable, not tiny.
+	# New range: 22-32px at ui_cap, matching roughly 3.2% vmin.
+	fs_caption = _clamp_i(roundi(22 * ui_cap), vmin * 0.032, roundi(32 * ui_cap))
 	fs_label = _clamp_i(roundi(11 * ui), vmin * 0.02, roundi(14 * ui))
 	fs_hud = _clamp_i(roundi(10 * ui), vmin * 0.02, roundi(13 * ui))
 	fs_icon = _clamp_i(roundi(14 * ui), vmin * 0.03, roundi(18 * ui))
@@ -240,7 +244,10 @@ func _recompute() -> void:
 	caption_max_w = minf(minf(cw * dpr * 0.9, 600 * dpr), vp.x * 0.86)
 	caption_pad_h = clampf(vmin * 0.011, 7 * ui_cap, 11 * ui_cap)
 	caption_pad_v = clampf(vmin * 0.0085, 5 * ui_cap, 8 * ui_cap)
-	caption_bottom = clampf(safe_bottom + vmin * 0.04, 24 * dpr, 60 * dpr)
+	# hug the bottom edge: only the safe area inset plus a minimal 8px gutter
+	caption_bottom = clampf(safe_bottom + 8.0 * dpr, 8 * dpr, 20 * dpr)
+	# tutorial hint sits at the top, just below the scene tag row
+	tap_top = edge + float(fs_label) + gap * 2.0
 	tap_bottom = maxf(safe_bottom + 6 * dpr, 10 * dpr)
 
 	gap = 6.0 * dpr

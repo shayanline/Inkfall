@@ -1,0 +1,43 @@
+[gd_resource type="ParticleProcessMaterial" load_steps=4 format=3]
+
+[sub_resource type="Gradient" id="color_grad"]
+offsets = PackedFloat32Array(0.0, 0.2, 0.55, 1.0)
+colors = PackedColorArray(1.0, 0.95, 0.7, 0.0,  1.0, 0.75, 0.25, 1.0,  0.9, 0.35, 0.05, 0.8,  0.3, 0.05, 0.0, 0.0)
+
+[sub_resource type="GradientTexture1D" id="color_ramp"]
+gradient = SubResource("color_grad")
+
+[sub_resource type="CurveTexture" id="scale_curve_tex"]
+curve = null
+
+[resource]
+## Embers rise from a small box at the flame mid-height, arc outward, decelerate, then fade.
+## emission_shape = 3 (Box), so sparks scatter from a horizontal slot rather than a single point.
+emission_shape = 3
+emission_box_extents = Vector3(8.0, 1.0, 0.0)
+
+## Direction: straight up with a generous spread so embers arc sideways.
+direction = Vector3(0.0, -1.0, 0.0)
+spread = 65.0
+
+## Gravity: very light so embers drift more than they drop (they are rising hot gas).
+gravity = Vector3(0.0, -8.0, 0.0)
+
+## Velocity: fast enough to arc visibly above the flame, with wide random range for variety.
+initial_velocity_min = 55.0
+initial_velocity_max = 130.0
+
+## Angular velocity: embers spin as they rise.
+angular_velocity_min = -240.0
+angular_velocity_max =  240.0
+
+## Damping: strong, so each ember decelerates quickly and hangs at its peak before falling.
+damping_min = 30.0
+damping_max = 60.0
+
+## Scale: small (they are sparks, not fireballs).
+scale_min = 0.05
+scale_max = 0.14
+
+## Colour ramp: fade in briefly, bright orange-white at peak, fade out to red then transparent.
+color_ramp = SubResource("color_ramp")

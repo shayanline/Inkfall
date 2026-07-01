@@ -73,7 +73,7 @@ func _ready() -> void:
 	if light:
 		light.texture = LightTex.gobo(_gobo)
 		light.color = _temp_color()
-		light.energy = 1.9
+		light.energy = 1.0   # neutral default under the bloom pyramid; re-tune from here
 		light.texture_scale = _reach
 		LightKit.caster(light, LightKit.WARM, _softness)
 		_light_base_x = light.position.x

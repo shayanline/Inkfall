@@ -266,10 +266,10 @@ func _danny() -> Dictionary:
 			},
 			{
 				"title": "THE LOSS", "ground": 0.82, "key_light": {"x": 0.5, "y": 0.3}, "rain_vol": 0.16,
-				"backdrop": {"type": "room", "wall": "#15171f", "wall_top": "#202430", "door": 0.62},
+				"backdrop": {"type": "room", "wall": "#191c26", "wall_top": "#262a37", "door": 0.64},
 				"lights": [
-					{"type": "bulb", "x": 0.45, "y": 0.30, "intensity": 0.8, "flicker": true, "par": 0.2},
-					{"type": "neon", "x": 0.10, "y": 0.245, "w": 240, "h": 60, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 4.4, "par": 0.2, "intensity": 1.0, "dropout": true},
+					{"type": "bulb", "x": 0.45, "y": 0.30, "intensity": 1.0, "flicker": true, "par": 0.2},
+					{"type": "neon", "x": 0.10, "y": 0.245, "w": 240, "h": 60, "color": Color("ff0018"), "label": "FORTUNE", "shape": "arrow", "seed": 2.2, "par": 0.2, "intensity": 1.0},
 				],
 				"cast": [
 					{"type": "slotMachine", "x": 0.08, "scale": 0.85, "par": 0.2},
