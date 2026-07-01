@@ -4,9 +4,9 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1782908168|4761236';
+const CACHE_VERSION = '1782919563|4573681';
 /** @type {string} */
-const CACHE_PREFIX = 'Inkfall-sw-cache-';
+const CACHE_PREFIX = 'Inkfall-Godot-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 /** @type {string} */
 const OFFLINE_URL = 'index.offline.html';
