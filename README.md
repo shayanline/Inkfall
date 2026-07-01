@@ -1,6 +1,6 @@
-# Inkfall
+# Inkfall-Godot
 
-Inkfall is a noir crime motion comic, a storytelling board where rain soaked stories are
+Inkfall-Godot is a noir crime motion comic, a storytelling board where rain soaked stories are
 staged and played one beat at a time. You tap through the night, the captions fall like
 narration, and the only colour is the colour that bleeds.
 
@@ -26,7 +26,7 @@ Pick a tale on the start screen, then tap or click to advance. Press `L` for lig
 ## Play it in the browser
 
 Every push to `master` exports the project for web and deploys it to GitHub Pages. Play the
-latest build at [shayanline.github.io/Inkfall](https://shayanline.github.io/Inkfall/).
+latest build at [shayanline.github.io/Inkfall-Godot](https://shayanline.github.io/Inkfall-Godot/).
 
 Feature branches get their own preview too, on the
 [live previews](#live-previews) dashboard below.
@@ -97,9 +97,9 @@ The fire fixture's flame texture is derived from a "Realistic Fire Flame" illust
 ## Live previews
 
 Every branch gets its own web build, listed on
-[the branch previews dashboard](https://shayanline.github.io/Inkfall/_dashboard/). The dashboard
+[the branch previews dashboard](https://shayanline.github.io/Inkfall-Godot/_dashboard/). The dashboard
 shows each branch with its live preview link, the open pull request if there is one, and whether the
 latest build is building, deployed or failed. It refreshes itself and rebuilds from the deployed
 folders, so it stays correct even when several branches deploy at once.
 
-master plays at [the site root](https://shayanline.github.io/Inkfall/).
+master plays at [the site root](https://shayanline.github.io/Inkfall-Godot/).

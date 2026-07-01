@@ -1,4 +1,4 @@
-# INKFALL, board operating guide
+# INKFALL-GODOT, board operating guide
 
 A noir crime motion comic told on a storytelling board, built natively in Godot 4.7. Stories are
 typed data and the look is shared. This is a board for staging noir stories, not a general purpose
